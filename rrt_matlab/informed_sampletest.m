@@ -1,0 +1,1 @@
+new_node=informed_sample([0,0],[700,700],1500);
