@@ -15,9 +15,10 @@ class rrt_node():
     coordiantes x,y,z
     index of the node's parent
     """
-    def __init__(self,position,parent):
+    def __init__(self,position,parent,dist=0):
         self.position=position#coordinate (x,y,z),np.array
         self.index_parent=parent
+        self.dist=dist#dist to root
 
 class basic_rrt():
     """
@@ -37,16 +38,22 @@ class basic_rrt():
         TO DO: improve the random sample process to accept abitrary start_pos and goal_pos
         TO DO: tune the self.delta
         TO DO: visualize the start position and goal position with point
+        TO DO: inverse the traceback list
         """
         self.start=start_pos
         self.goal=goal_pos
         self.index=-1# the index of current node, -1 means no nodes in the list
         self.goal_found=False
         self.delta=0.3#need fine-tune
-        self.threshold=0.2#threshol to the goal
+        self.threshold=0.5#threshold to the goal
+        
+        self.first_arrive=True
+        self.goal_index=-1#the index of goal node, for back tracing
         self.tree=[]
+        self.trajectory_back=[]#
+        
         root=rrt_node(position=np.array(start_pos),parent=-1)#the root node of RRT tree
-        self.push_newnode(root)#push the root, index=1
+        self.push_newnode(root)#push the root, index=0
         ##visualize the start and goal position with a line
         print("start and goal",self.start,self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
@@ -75,14 +82,30 @@ class basic_rrt():
             #4.push the new node into the tree
             normalized=diff_coordinate/euler_distance*self.delta
             new_position=node_nearest.position+normalized
-            node_new=rrt_node(new_position,min_index)#generate node_new
+            node_new=rrt_node(new_position,min_index,node_nearest.dist+self.delta)#generate node_new
             self.push_newnode(node_new)
             self.visualisation(list(node_nearest.position),list(new_position))
             
-        #print("index",self.index)
+            #print("index",self.index)
+            #5.check whether the goal is reached
+            distance_togoal=np.linalg.norm(new_position-np.array(self.goal))
+            if distance_togoal<self.threshold:
+                print("Goal FOUND!")
+                if self.first_arrive:#push the goal into the tree when arrive at first time, and backtrace
+                    goal_node=rrt_node(np.array(self.goal),self.index,node_new.dist+distance_togoal)#the goal's parent is the new node
+                    self.push_newnode(goal_node)
+                    self.visualisation(list(new_position),self.goal)
+                    
+                    self.goal_found=True
+                    self.first_arrive=False
+                    self.goal_index=self.index
+                    
+                    #6.trace back 
+                    self.backtracing()
+
         
         
-        return self.goal_found
+        #return self.goal_found
     
     def push_newnode(self,node):
         self.tree.append(node)
@@ -91,17 +114,35 @@ class basic_rrt():
     def collision_check(self,start_pos,goal_pos):
         collision=False
         result=p.rayTest(list(start_pos),list(goal_pos))[0][0]#get the collision object id, if==-1, then no collision
-        print(result)
+        #print(result)
         if result!=-1:
             collision=True
         return collision
     
     def visualisation(self,start_pos,goal_pos):
         p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-        return 0
+
     
     def backtracing(self):
-        return 0
+        """
+        draw the trajectory from goal to root and generate the list of node
+
+        """
+        index=self.goal_index
+        self.trajectory_back=[]
+        while index!=0:#if arrive root, break
+            self.trajectory_back.append(self.tree[index])
+            parent_index=self.tree[index].index_parent
+            p.addUserDebugLine(list(self.tree[parent_index].position),list(self.tree[index].position),lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3)
+            index=parent_index
+            
+        self.trajectory_back.append(self.tree[0])#push the root node
+        
+        print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start)-np.array(self.goal)))
+        print("trajectory total length: ", self.tree[self.goal_index].dist)
+            
+        
+        
     
     
     #deubg test
@@ -121,9 +162,13 @@ if __name__ == "__main__":
     p.loadURDF("plane.urdf")
 
     rrt=basic_rrt([0.5,0.5,0.5],[4,4,4])
+    
+    ######################DEBUG TEST1 stop after goal found###############################
     while 1:
 
         #time.sleep(0.05)
-        rrt.step()
-        p.stepSimulation()
+        if rrt.goal_found==False:#if the goal haven't been found
+            rrt.step()
+
+    ######################DEBUG TEST1 END#######################################################
         

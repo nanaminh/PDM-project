@@ -54,7 +54,7 @@ DEFAULT_AGGREGATE = True
 DEFAULT_OBSTACLES = True
 DEFAULT_SIMULATION_FREQ_HZ = 240#?
 DEFAULT_CONTROL_FREQ_HZ = 48#?
-DEFAULT_DURATION_SEC = 6
+DEFAULT_DURATION_SEC = 100
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
@@ -191,7 +191,10 @@ def run(
         #### Step the simulation ###################################
         
         obs, reward, done, info = env.step(action)
-        #rrt.step()
+        if rrt.goal_found==False:#if the goal haven't been found
+            rrt.step()
+
+            
         #print("neighbours",obs.keys())neighbours dict_keys(['0', '1', '2'])
         #print("neighbours",obs["2"]["neighbors"])
         #print("env.step: obs", obs)
