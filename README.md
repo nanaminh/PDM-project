@@ -34,6 +34,7 @@ $ python3 base_rrt_test.py
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
 WARNING: 
+
 1.In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
 
 2.The trajectory generation is naive method. The drone cannot follow it perfectly.
