@@ -21,6 +21,11 @@ To run simple trajectory generation in a blanc environment:
 $ python3 bang_bang.py 
 
 ```
+To test simple trajectory and simple target position generation:
+```sh
+$ python3 trajectory_generation_test.py 
+
+```
 To run the basic_rrt in an environment with obstacles and the drone will follow the trajectory:
 ```sh
 $ python3 base_rrt_test.py 
@@ -29,6 +34,8 @@ $ python3 base_rrt_test.py
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
 WARNING: 
-In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
+1.In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
+
+2.The trajectory generation is naive method. The drone cannot follow it perfectly.
 
 
