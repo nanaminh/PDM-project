@@ -3,6 +3,7 @@
  Group10
 
 ## Install
+22/12/2022
 Please clone this repository and under the repository of gym-pybullet `~/gym-pybullet-drones/gym_pybullet_drones/`.
 
 ```sh
@@ -12,13 +13,22 @@ $ git clone git@github.com:nanaminh/PDM-project.git
 To run the basic_rrt in a blanc environment:
 ```sh
 $ python3 base_rrt.py 
+
 ```
-To run the basic_rrt in an environment with obstacles:
+23/12/2022
+To run simple trajectory generation in a blanc environment:
+```sh
+$ python3 bang_bang.py 
+
+```
+To run the basic_rrt in an environment with obstacles and the drone will follow the trajectory:
 ```sh
 $ python3 base_rrt_test.py 
 ```
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt.png)
 
-
+![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
 WARNING: 
 In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
+
+
