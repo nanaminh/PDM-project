@@ -24,7 +24,7 @@ def tj_from_line(start_pos,end_pos,t_ttl,control_freq_hz):
     """
     PERIOD=t_ttl
     NUM_WP = int(np.ceil(control_freq_hz*PERIOD))
-    print("sub traj",NUM_WP)
+    #print("sub traj",NUM_WP)
     TARGET_POS = np.zeros((NUM_WP,3))
     start_pos=np.array(start_pos)
     end_pos=np.array(end_pos)

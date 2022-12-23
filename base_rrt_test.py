@@ -28,14 +28,12 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ####
 from base_rrt import basic_rrt
+from  bang_bang import tj_from_multilines
 ####
 
 
-
-
-
 DEFAULT_DRONES = DroneModel("cf2x")
-DEFAULT_NUM_DRONES = 3
+DEFAULT_NUM_DRONES = 1
 DEFAULT_PHYSICS = Physics("pyb")
 DEFAULT_VISION = False
 DEFAULT_GUI = True
@@ -78,20 +76,6 @@ def run(
     AGGR_PHY_STEPS = int(simulation_freq_hz/control_freq_hz) if aggregate else 1#
     print("AGGR_PHY_STEPS",AGGR_PHY_STEPS)
     
-    #AGGR_PHY_STEPS 5
-    #### Initialize a circular trajectory ######################
-    PERIOD = 10###
-    NUM_WP = control_freq_hz*PERIOD# get all the weaypoints
-    TARGET_POS = np.zeros((NUM_WP,3))#x,y,z coordinates
-    ###################################################
-    
-    for i in range(NUM_WP):
-        TARGET_POS[i, :] = R*np.cos((i/NUM_WP)*(2*np.pi)+np.pi/2)+INIT_XYZS[0, 0], R*np.sin((i/NUM_WP)*(2*np.pi)+np.pi/2)-R+INIT_XYZS[0, 1], 0
-
-    print("TARGET_POS Shape: ",np.shape(TARGET_POS))#TARGET_POS Sshape:  (480, 3)
-    wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])#什么是wp_counters???waypoint?
-    print("wp_counters",wp_counters)#[  0  80 160]
-
 
     #### Create the environment with or without video capture ##
     if vision: 
@@ -140,8 +124,6 @@ def run(
 
     #### Run the simulation ####################################
     CTRL_EVERY_N_STEPS = int(np.floor(env.SIM_FREQ/control_freq_hz))###KEYWORD?
-    print("CTRL_EVERY_N_STEPS",CTRL_EVERY_N_STEPS)
-    print("env.SIM_FREQ",env.SIM_FREQ)
 #  CTRL_EVERY_N_STEPS 5
 #  env.SIM_FREQ 240
 #control_freq_hz 48 
@@ -157,44 +139,31 @@ def run(
     rrt=basic_rrt([0,0,0],[4,4,4])
     
     
-    for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ, total time? AGGR_PHY_STEPS time step
-    #(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS)  (0, 12x240, 5)
-    #env.SIM_FREQ=simulation_freq_hz   240 hierachy from BaseAviary
-    #AGGR_PHY_STEPS = int(simulation_freq_hz/control_freq_hz)=   
-    #the whole loop is for the whole simulation, not for trajectory
-    # total: duration_sec*control_freq
-    
-    ##################random trajectory test#####################################
-    #PERIOD = 10### time for the trajectory
-    # NUM_WP = control_freq_hz*PERIOD# get the weaypoints numbers
-    # TARGET_POS = np.zeros((NUM_WP,3))
-    # #
-    # omega = 1
-    
-    # target_pos =[np.random.random_sample(),np.random.random_sample(),np.random.random_sample()]
-    # # print(target_pos)
-    # p.addUserDebugLine(pre_pos, target_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-    # pre_pos = target_pos
-    # print("result of rayTest",p.rayTest([0,0,0],[1,2,0]))
-    # ####################collision check test#######################
-    # p.addUserDebugLine([0,0,0], [1,2,0], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
-    
-    
-        
+    for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ
         #### Make it rain rubber ducks #############################
-        if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
+        #if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
 
         #### Step the simulation ###################################
         
         obs, reward, done, info = env.step(action)# update of pybullet
         if rrt.goal_found==False:#if the goal haven't been found
             rrt.step()
-
-            
+        else:
+            index_continue=i
+            break
+     
+    START_POS=rrt.start_pos   
+    END_POS=rrt.end_pos   
+    TARGET_POS,NUM_WP=tj_from_multilines(START_POS,END_POS,control_freq_hz)
+    wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
+    
+    
+    for i in range(index_continue, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ, total time? AGGR_PHY_STEPS time step
         #print("neighbours",obs.keys())neighbours dict_keys(['0', '1', '2'])
         #print("neighbours",obs["2"]["neighbors"])
         #print("env.step: obs", obs)
         #### Compute control at the desired frequency ##############
+        obs, reward, done, info = env.step(action)# update of pybullet
         if i%CTRL_EVERY_N_STEPS == 0:
             #env.SIM_FREQ=simulation_freq_hz   240 hierachy from BaseAviary
             #CTRL_EVERY_N_STEPS = int(np.floor(env.SIM_FREQ/control_freq_hz))#
@@ -204,7 +173,7 @@ def run(
             for j in range(num_drones):
                 action[str(j)], _, _ = ctrl[j].computeControlFromState(control_timestep=CTRL_EVERY_N_STEPS*env.TIMESTEP,
                                                                        state=obs[str(j)]["state"],
-                                                                       target_pos=np.hstack([TARGET_POS[wp_counters[j], 0:2], INIT_XYZS[j, 2]]),
+                                                                       target_pos=np.hstack(TARGET_POS[wp_counters[j], 0:3]),
                                                                        # target_pos=INIT_XYZS[j, :] + TARGET_POS[wp_counters[j], :],
                                                                        target_rpy=INIT_RPYS[j, :]
                                                                        )#control 
