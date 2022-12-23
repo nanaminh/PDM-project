@@ -33,6 +33,8 @@ $ python3 base_rrt_test.py
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt.png)
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
+
+![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/trajectory_generation_test.png)
 WARNING: 
 
 1.In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
