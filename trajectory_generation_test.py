@@ -100,8 +100,8 @@ def run(
     #     TARGET_POS[i, :] = -i*0.005,-i*0.005,i*0.005
     # #######TRAJECTORY DEBUG TEST4 Diamond#################################################
     
-    start_pos=[[0,0,0],[1,1,1],[0,2,3]]
-    end_pos=[[1,1,1],[0,2,3],[1,3,2]]
+    start_pos=[[0,0,0],[-1,-1,1],[1,2,1.5],[3,1,2]]
+    end_pos=[[-1,-1,1],[1,2,1.5],[3,1,2],[1,-1,2.5]]
     #print(start_pos[0])
     target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
     TARGET_POS=target
@@ -154,13 +154,13 @@ def run(
                     colab=colab
                     )#utils,duration sec?
 
-    #### Initialize the controllers ############################
+    ###### Initialize the controllers ############################
     if drone in [DroneModel.CF2X, DroneModel.CF2P]:#default
         ctrl = [DSLPIDControl(drone_model=drone) for i in range(num_drones)]###control functions
     elif drone in [DroneModel.HB]:
         ctrl = [SimplePIDControl(drone_model=drone) for i in range(num_drones)]
 
-    #### Run the simulation ####################################
+    ###### Run the simulation ####################################
     CTRL_EVERY_N_STEPS = int(np.floor(env.SIM_FREQ/control_freq_hz))###KEYWORD?
     print("CTRL_EVERY_N_STEPS",CTRL_EVERY_N_STEPS)
     print("env.SIM_FREQ",env.SIM_FREQ)
@@ -173,12 +173,13 @@ def run(
     START = time.time()
     print("START Simulation time",START)
     ##########################DEBUG Visualization for straight line trajectory################################################
-    p.addUserDebugLine([0,0,0], [-NUM_WP*.005,-NUM_WP*.005,NUM_WP*.005], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+   # p.addUserDebugLine([0,0,0], [-NUM_WP*.005,-NUM_WP*.005,NUM_WP*.005], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
     
-    p.addUserDebugLine([0,0,0], [1,1,1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([1,1,1], [0,2,3], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([0,2,3], [1,3,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    
+    p.addUserDebugLine([0,0,0], [-1,-1,1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([-1,-1,1], [1,2,1.5], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([1,2,1.5], [3,1,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([3,1,2], [1,-1,2.5], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+
     ###########################################################################
     
     

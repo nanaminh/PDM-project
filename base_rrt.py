@@ -50,7 +50,13 @@ class basic_rrt():
         self.first_arrive=True
         self.goal_index=-1#the index of goal node, for back tracing
         self.tree=[]
+        
+        ####################################
         self.trajectory_back=[]#
+        self.waypoint=[]
+        self.start_pos=[]
+        self.end_pos=[]
+        #########################################
         
         root=rrt_node(position=np.array(start_pos),parent=-1)#the root node of RRT tree
         self.push_newnode(root)#push the root, index=0
@@ -130,6 +136,10 @@ class basic_rrt():
         """
         index=self.goal_index
         self.trajectory_back=[]
+        self.waypoint=[]
+        self.start_pos=[]
+        self.end_pos=[]
+        
         while index!=0:#if arrive root, break
             self.trajectory_back.append(self.tree[index])
             parent_index=self.tree[index].index_parent
@@ -137,10 +147,30 @@ class basic_rrt():
             index=parent_index
             
         self.trajectory_back.append(self.tree[0])#push the root node
+        self.trajectory_back.reverse()
+        #update waypoint information
+        self.get_waypoints()
         
         print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start)-np.array(self.goal)))
         print("trajectory total length: ", self.tree[self.goal_index].dist)
-            
+        
+    
+    
+    def get_waypoints(self):
+        """
+        output:waypoint,start_pos,end_pos  np.array()
+        
+        """
+        if self.trajectory_back==[]:
+            raise ValueError("Path Still NOT FOUND!")
+        
+        waypoint=np.vstack([node.position for node in self.trajectory_back])
+        self.waypoint=waypoint
+        self.start_pos=waypoint[0:-1]
+        self.end_pos=waypoint[1:]
+        print(np.shape(self.waypoint))
+        print(np.shape(self.start_pos))
+        print(np.shape(self.end_pos))
         
         
     
@@ -169,6 +199,6 @@ if __name__ == "__main__":
         #time.sleep(0.05)
         if rrt.goal_found==False:#if the goal haven't been found
             rrt.step()
-
+        
     ######################DEBUG TEST1 END#######################################################
         

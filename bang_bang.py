@@ -50,7 +50,7 @@ def tj_from_line(start_pos,end_pos,t_ttl,control_freq_hz):
 
 def tj_from_multilines(start_pos,end_pos,control_freq_hz):
     """
-    input: start_pos,end_pos  waypoints,shape[num_waypoints,3]
+    input: start_pos,end_pos  waypoints,shape[num_waypoints-1,3]
     output: desired_pos   array
     """
     if np.shape(start_pos)!=np.shape(end_pos):
