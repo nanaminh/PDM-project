@@ -1,10 +1,10 @@
-
 #######
 #RO47005 Planning and decision making 22/23
 #Group:10
 #Aurthor: Danning Zhao
 #email: D.ZHAO-3@student.tudelft.nl
-#reference to example/fly.py
+#Reference to fly.py
+
 #######
 
 import os
@@ -26,16 +26,12 @@ from gym_pybullet_drones.control.SimplePIDControl import SimplePIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 
-####
-from base_rrt import basic_rrt
-####
-
-
-
-
+###############################################
+from bang_bang import tj_from_multilines
+###############################################
 
 DEFAULT_DRONES = DroneModel("cf2x")
-DEFAULT_NUM_DRONES = 3
+DEFAULT_NUM_DRONES = 1
 DEFAULT_PHYSICS = Physics("pyb")
 DEFAULT_VISION = False
 DEFAULT_GUI = True
@@ -46,7 +42,7 @@ DEFAULT_AGGREGATE = True
 DEFAULT_OBSTACLES = True
 DEFAULT_SIMULATION_FREQ_HZ = 240#?
 DEFAULT_CONTROL_FREQ_HZ = 48#?
-DEFAULT_DURATION_SEC = 100
+DEFAULT_DURATION_SEC = 20
 DEFAULT_OUTPUT_FOLDER = 'results'
 DEFAULT_COLAB = False
 
@@ -71,27 +67,53 @@ def run(
     H = .1
     H_STEP = .05
     R = .3
-    INIT_XYZS = np.array([[R*np.cos((i/6)*2*np.pi+np.pi/2), R*np.sin((i/6)*2*np.pi+np.pi/2)-R, H+i*H_STEP] for i in range(num_drones)])#nested lists
-    #print("INIT_XYZS shape",np.shape(INIT_XYZS))#(3,3)
-    INIT_RPYS = np.array([[0, 0,  i * (np.pi/2)/num_drones] for i in range(num_drones)])
-    #print("INIT_RPYS shape",np.shape(INIT_RPYS))#(3,3)
+    INIT_XYZS = np.array([[0, 0, 0.5] for i in range(num_drones)])#WARNINFG: nested lists, even for num_drones=1
+    print("INIT_XYZS shape",np.shape(INIT_XYZS))#WARNING SHAPE INIT_XYZS [[0 0 0]]
+    print("INIT_XYZS", INIT_XYZS)
+    INIT_RPYS = np.array([[0, 0, 0] for i in range(num_drones)])
+    print("INIT_RPYS shape",np.shape(INIT_RPYS))#
     AGGR_PHY_STEPS = int(simulation_freq_hz/control_freq_hz) if aggregate else 1#
     print("AGGR_PHY_STEPS",AGGR_PHY_STEPS)
+    
+    # INIT_XYZS shape (1, 3)
+    # INIT_RPYS shape (1, 3)
+    # AGGR_PHY_STEPS 5
+    # TARGET_POS SHAPE (480, 3)
     
     #AGGR_PHY_STEPS 5
     #### Initialize a circular trajectory ######################
     PERIOD = 10###
     NUM_WP = control_freq_hz*PERIOD# get all the weaypoints
-    TARGET_POS = np.zeros((NUM_WP,3))#x,y,z coordinates
-    ###################################################
+    TARGET_POS = np.zeros((NUM_WP,3))
+    #
+    # for i in range(NUM_WP):
+    #     TARGET_POS[i, :] =0,0,3
     
-    for i in range(NUM_WP):
-        TARGET_POS[i, :] = R*np.cos((i/NUM_WP)*(2*np.pi)+np.pi/2)+INIT_XYZS[0, 0], R*np.sin((i/NUM_WP)*(2*np.pi)+np.pi/2)-R+INIT_XYZS[0, 1], 0
-
-    print("TARGET_POS Shape: ",np.shape(TARGET_POS))#TARGET_POS Sshape:  (480, 3)
+    #######TRAJECTORY DEBUG TEST1 CIRCLE#################################################
+    # for i in range(NUM_WP):
+    #     TARGET_POS[i, :] = R*np.cos((i/NUM_WP)*(2*np.pi)+np.pi/2)+INIT_XYZS[0, 0], R*np.sin((i/NUM_WP)*(2*np.pi)+np.pi/2)-R+INIT_XYZS[0, 1], 1
+    #######TRAJECTORY DEBUG TEST2 HOVER#################################################
+    # for i in range(NUM_WP):
+    #     TARGET_POS[i, :] = -1,-1,0.5
+    #######TRAJECTORY DEBUG TEST3 STRAIGHT LINE#################################################
+    # for i in range(NUM_WP):
+    #     TARGET_POS[i, :] = -i*0.005,-i*0.005,i*0.005
+    # #######TRAJECTORY DEBUG TEST4 Diamond#################################################
+    
+    start_pos=[[0,0,0],[1,1,1],[0,2,3]]
+    end_pos=[[1,1,1],[0,2,3],[1,3,2]]
+    #print(start_pos[0])
+    target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
+    TARGET_POS=target
+    NUM_WP=num
+    #####################################################################################
+    
+    
+    
+    
+    print("TARGET_POS SHAPE", np.shape(TARGET_POS))#TARGET_POS SHAPE (480, 3)  (NUM_WP,3)
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])#什么是wp_counters???waypoint?
     print("wp_counters",wp_counters)#[  0  80 160]
-
 
     #### Create the environment with or without video capture ##
     if vision: 
@@ -114,8 +136,8 @@ def run(
                          initial_rpys=INIT_RPYS,
                          physics=physics,
                          neighbourhood_radius=10,
-                         freq=simulation_freq_hz,#240
-                         aggregate_phy_steps=AGGR_PHY_STEPS,#5
+                         freq=simulation_freq_hz,
+                         aggregate_phy_steps=AGGR_PHY_STEPS,
                          gui=gui,
                          record=record_video,
                          obstacles=obstacles,
@@ -150,70 +172,42 @@ def run(
     action = {str(i): np.array([0,0,0,0]) for i in range(num_drones)}#DICTIONARY
     START = time.time()
     print("START Simulation time",START)
+    ##########################DEBUG Visualization for straight line trajectory################################################
+    p.addUserDebugLine([0,0,0], [-NUM_WP*.005,-NUM_WP*.005,NUM_WP*.005], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
     
-    #pre_pos = [0, 0, 0]
+    p.addUserDebugLine([0,0,0], [1,1,1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([1,1,1], [0,2,3], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([0,2,3], [1,3,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
     
-    ##initialize rrt
-    rrt=basic_rrt([0,0,0],[4,4,4])
+    ###########################################################################
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ, total time? AGGR_PHY_STEPS time step
-    #(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS)  (0, 12x240, 5)
-    #env.SIM_FREQ=simulation_freq_hz   240 hierachy from BaseAviary
-    #AGGR_PHY_STEPS = int(simulation_freq_hz/control_freq_hz)=   
-    #the whole loop is for the whole simulation, not for trajectory
-    # total: duration_sec*control_freq
     
-    ##################random trajectory test#####################################
-    #PERIOD = 10### time for the trajectory
-    # NUM_WP = control_freq_hz*PERIOD# get the weaypoints numbers
-    # TARGET_POS = np.zeros((NUM_WP,3))
-    # #
-    # omega = 1
-    
-    # target_pos =[np.random.random_sample(),np.random.random_sample(),np.random.random_sample()]
-    # # print(target_pos)
-    # p.addUserDebugLine(pre_pos, target_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-    # pre_pos = target_pos
-    # print("result of rayTest",p.rayTest([0,0,0],[1,2,0]))
-    # ####################collision check test#######################
-    # p.addUserDebugLine([0,0,0], [1,2,0], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
-    
-    
-        
         #### Make it rain rubber ducks #############################
-        if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
+        #if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
 
         #### Step the simulation ###################################
-        
-        obs, reward, done, info = env.step(action)# update of pybullet
-        if rrt.goal_found==False:#if the goal haven't been found
-            rrt.step()
-
-            
-        #print("neighbours",obs.keys())neighbours dict_keys(['0', '1', '2'])
-        #print("neighbours",obs["2"]["neighbors"])
+        obs, reward, done, info = env.step(action)
         #print("env.step: obs", obs)
         #### Compute control at the desired frequency ##############
         if i%CTRL_EVERY_N_STEPS == 0:
-            #env.SIM_FREQ=simulation_freq_hz   240 hierachy from BaseAviary
-            #CTRL_EVERY_N_STEPS = int(np.floor(env.SIM_FREQ/control_freq_hz))#
-            #AGGR_PHY_STEPS = int(simulation_freq_hz/control_freq_hz)
 
             #### Compute control for the current way point #############
             for j in range(num_drones):
                 action[str(j)], _, _ = ctrl[j].computeControlFromState(control_timestep=CTRL_EVERY_N_STEPS*env.TIMESTEP,
                                                                        state=obs[str(j)]["state"],
-                                                                       target_pos=np.hstack([TARGET_POS[wp_counters[j], 0:2], INIT_XYZS[j, 2]]),
+                                                                       #target_pos=np.hstack([TARGET_POS[wp_counters[j], 0:2], INIT_XYZS[j, 2]])
+                                                                       target_pos=np.hstack(TARGET_POS[wp_counters[j], 0:3])
                                                                        # target_pos=INIT_XYZS[j, :] + TARGET_POS[wp_counters[j], :],
-                                                                       target_rpy=INIT_RPYS[j, :]
+                                                                       #target_rpy=INIT_RPYS[j, :]
                                                                        )#control 
 
             #### Go to the next way point and loop #####################
             for j in range(num_drones): 
                 wp_counters[j] = wp_counters[j] + 1 if wp_counters[j] < (NUM_WP-1) else 0
 
-        # #### Log the simulation ####################################
+        #### Log the simulation ####################################
         for j in range(num_drones):
             logger.log(drone=j,
                        timestamp=i/env.SIM_FREQ,
@@ -246,7 +240,7 @@ def run(
     logger.save()
     logger.save_as_csv("pid") # Optional CSV save
 
-    # #### Plot the simulation results ###########################
+    #### Plot the simulation results ###########################
     if plot:
         logger.plot()
 
