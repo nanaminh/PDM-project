@@ -17,6 +17,9 @@ import random
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
+import sys
+
+sys.path.append('../gym-pybullet-drones/')
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
