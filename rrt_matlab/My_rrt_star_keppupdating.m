@@ -108,7 +108,7 @@ for iter = 1:3000
     T.v(N+1).dist=T.v(near_index).dist+norm(x_near-x_new); 
     T.v(N+1).indPrev = near_index;     %
     
-%Step6: rewiring
+    % Step6: rewiring
     [~,M]=size(x_near_list);
     x_near_list(M+1)=index_temp;
 
