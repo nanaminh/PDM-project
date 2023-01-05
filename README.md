@@ -4,10 +4,13 @@
 
 ## Install
 22/12/2022
-Please clone this repository and under the repository of gym-pybullet `~/gym-pybullet-drones/gym_pybullet_drones/`.
+For this project the existing environment gym-pybullet-drones was used. Please follow their installation guide first:
+https://github.com/utiasDSL/gym-pybullet-drones
+
+After this is done and confirmed by running their examples, clone this repository in the same folder as the environment.
 
 ```sh
-$ cd gym-pybullet-drones/gym_pybullet_drones/
+$ git cd '$example$/GitHub/'
 $ git clone git@github.com:nanaminh/PDM-project.git
 ```
 To run the basic_rrt in a blanc environment:
