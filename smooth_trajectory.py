@@ -10,6 +10,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import pybullet_data as pd
 import pybullet as p
+import math
 
 def getCoeff(k,n_order,ts):
     """
@@ -82,21 +83,53 @@ def getConstrainMtx(start_pos,goal_pos,n_order):
     
     print(np.shape(mtxA),np.shape(mtxb))
     return mtxA,mtxb
-# def getConstrainMtxb(start_pos,goal_pos,n_order):
-#     """
-#     return the constraint matrix, for single coordinate
-#     Args:
-#         start_pos (list): start point of each sgment dim(1,n)
-#         goal_pos (list): goal point of each sgment dim(1,n)
-#         n_order (int): order of polynomial
 
-#     Returns:
-#         np.array: the constraint matrix
-#     """
+def setTime(waypoints):
+    """
+    Args:
+        waypoints (list): a list of 3D positions
+
+    Returns:
+        T(list): accumulated time
+    """
+    length=[]
+    waypoints=np.array(waypoints)
+    for index in range(len(waypoints)-1):
+        length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
+        
+    T=3*np.cumsum(length)
+    return T
+
+def generateTargetPos(waypoints,control_freq_hz):
+    """_summary_
+
+    Args:
+        waypoints (list): dim(nx3),3d waypoints
+        control_freq_hz (int): 
+
+    Returns:
+        target position(list):
+        num:number of points 
+    """
+    target=[]
+    num=0
+    # mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
+    # param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
+
+    # mtxAy,mtxby=getConstrainMtx(y1,y2,7)
+    # param_y=np.linalg.inv(mtxAy)@mtxby.T
     
-#     return 0
+    
+    return target,num
+    
 
-#list inserting test
+if __name__ == "__main__":
+     ########################################################################
+    a=10
+    waypoints=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
+    print(setTime(waypoints))
+    ########################################################################
+    #list inserting test
 # a=[0,0,0,0]
 # b=[1,1]
 # a[1:3]=b
@@ -121,8 +154,6 @@ def getConstrainMtx(start_pos,goal_pos,n_order):
 # Y=[40,80,40,0,40]
 # y1=[40,80,40,0]
 # y2=[80,40,0,40]
-
-if __name__ == "__main__":
     ####################################################################
     # X=[40,80,120,150,180]
     # x1=[40,80,120,150]
@@ -155,58 +186,57 @@ if __name__ == "__main__":
     # plt.plot(midpointx, midpointy, color="blue", linewidth=2.5, linestyle="-")
     # plt.plot(X, Y)
     # plt.show()
-#########################################################################
-    # x1=[40,80]
+    ###########################################################
+        # x1=[40,80]
     # x2=[80,120]
     # mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
     #进行debug,发现第4行全为0，即index出现问题
     # print(np.shape(mtxAx))
     # param_x=np.linalg.inv(mtxAx)@mtxbx.T
+##############################trajectory generation and visualisation test###########################################
+
     
-    waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
-    X=[0.4,0.8,1.2,1.5,1.8]
-    x1=[0.4,0.8,1.2,1.5]
-    x2=[0.8,1.2,1.5,1.8]
-    Y=[0.4,0.8,0.4,0,0.4]
-    y1=[0.4,0.8,0.4,0]
-    y2=[0.8,0.4,0,0.4]
+    # waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
+    # X=[0.4,0.8,1.2,1.5,1.8]
+    # x1=[0.4,0.8,1.2,1.5]
+    # x2=[0.8,1.2,1.5,1.8]
+    # Y=[0.4,0.8,0.4,0,0.4]
+    # y1=[0.4,0.8,0.4,0]
+    # y2=[0.8,0.4,0,0.4]
     
-    p.connect(p.GUI)
-    p.setAdditionalSearchPath(pd.getDataPath())
-    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
-    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    p.loadURDF("plane.urdf")
-    #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
-    for wp in range(0,len(waypoint)-1):
-        p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-        print(waypoint[wp])
+    # p.connect(p.GUI)
+    # p.setAdditionalSearchPath(pd.getDataPath())
+    # # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
+    # # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    # p.loadURDF("plane.urdf")
+    # #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
+    # for wp in range(0,len(waypoint)-1):
+    #     p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    #     print(waypoint[wp])
         
         
-    segment=len(x1)
-    mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
-    param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
+    # segment=len(x1)
+    # mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
+    # param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
 
-    mtxAy,mtxby=getConstrainMtx(y1,y2,7)
-    param_y=np.linalg.inv(mtxAy)@mtxby.T
-    # plt.plot(X, Y, color="blue", linewidth=2.5, linestyle="-")
-    # plt.show()
-    print(param_y)
-    midpointx=[]
-    midpointy=[]
-    step=0.1
+    # mtxAy,mtxby=getConstrainMtx(y1,y2,7)
+    # param_y=np.linalg.inv(mtxAy)@mtxby.T
+    # # plt.plot(X, Y, color="blue", linewidth=2.5, linestyle="-")
+    # # plt.show()
+    # print(param_y)
+    # midpointx=[]
+    # midpointy=[]
+    # step=0.1
 
-    for seg in range(0,segment):
-        for i in np.arange(0,1+step,step):#ERROR:step 较小更好,注意+step
-            midpointx.append(float(getCoeff(0,7,i)@param_x[seg*8:(seg+1)*8]))
-            #print(i)
-            midpointy.append(float(getCoeff(0,7,i)@param_y[seg*8:(seg+1)*8]))
+    # for seg in range(0,segment):
+    #     for i in np.arange(0,1+step,step):#ERROR:step 较小更好,注意+step
+    #         midpointx.append(float(getCoeff(0,7,i)@param_x[seg*8:(seg+1)*8]))
+    #         #print(i)
+    #         midpointy.append(float(getCoeff(0,7,i)@param_y[seg*8:(seg+1)*8]))
     
-    waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
-    for wp in range(0,len(waypoints)-1):
-        p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-        #print(waypoints[wp])
+    # waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
+    # for wp in range(0,len(waypoints)-1):
+    #     p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
     
-    
-    ######################DEBUG TEST1 stop after goal found###############################
-    while 1:
-        p.stepSimulation()
+    ############################################################################################
+
