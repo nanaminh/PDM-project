@@ -103,27 +103,66 @@ def setTime(waypoints):
     for index in range(len(waypoints)-1):
         length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
         
-    T=3*np.cumsum(length)
-    return T
+    T=3*np.array(length) 
+    S=3*np.cumsum(length)
+    return T,S
 
 def generateTargetPos(waypoints,control_freq_hz):
-    """_summary_
+    """a function which wraps all functions together
 
     Args:
         waypoints (list): dim(nx3),3d waypoints
         control_freq_hz (int): 
 
     Returns:
-        target position(list):
+        target position(list): dim(3,)
         num:number of points 
     """
     target=[]
     num=0
-    # mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
-    # param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
+    segment=len(waypoints)-1
+    
+    waypointx=np.array(waypoints)[:,0]
+    waypointy=np.array(waypoints)[:,1]
+    waypointz=np.array(waypoints)[:,2]
+    
+    mtxAx,mtxbx=getConstrainMtx(waypointx,7)
+    param_x=np.linalg.inv(mtxAx)@mtxbx.T
+    mtxAy,mtxby=getConstrainMtx(waypointy,7)
+    param_y=np.linalg.inv(mtxAy)@mtxby.T
+    mtxAz,mtxbz=getConstrainMtx(waypointz,7)
+    param_z=np.linalg.inv(mtxAz)@mtxbz.T
+    
 
-    # mtxAy,mtxby=getConstrainMtx(y1,y2,7)
-    # param_y=np.linalg.inv(mtxAy)@mtxby.T
+    midpointx=[]
+    midpointy=[]
+    midpointz=[]
+    
+    T,S=setTime(waypoints)
+    #S.insert(0,0)#head insert
+    S=np.insert(S,0,0)
+    print(T,S)
+    
+    delta_t=1/control_freq_hz
+    for i in range(0,segment):
+        for t in np.arange(S[i],S[i+1]+delta_t,delta_t):
+            time=(t-S[i])/T[i]#rescale to 0-1
+            #print(time)
+            midpointx.append(float(getCoeff(0,7,time)@param_x[i*8:(i+1)*8]))
+            midpointy.append(float(getCoeff(0,7,time)@param_y[i*8:(i+1)*8]))
+            midpointz.append(float(getCoeff(0,7,time)@param_z[i*8:(i+1)*8]))
+            
+    target=[[midpointx[i],midpointy[i],midpointz[i]] for i in range(0,len(midpointx))]
+    num=len(target)
+    # PERIOD=t_ttl
+    # NUM_WP = int(np.ceil(control_freq_hz*PERIOD))
+    # #print("sub traj",NUM_WP)
+    # TARGET_POS = np.zeros((NUM_WP,3))    
+    
+#     waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
+    # for wp in range(0,len(waypoints)-1):
+    #     p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    
     
     
     return target,num
@@ -131,9 +170,27 @@ def generateTargetPos(waypoints,control_freq_hz):
 
 if __name__ == "__main__":
      ########################################################################
-    a=10
-    waypoints=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
-    print(setTime(waypoints))
+    
+    waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
+    # print(setTime(waypoints))
+    target,num=generateTargetPos(waypoint,control_freq_hz=48)
+    print(num)
+    
+    
+    p.connect(p.GUI)
+    p.setAdditionalSearchPath(pd.getDataPath())
+    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
+    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    p.loadURDF("plane.urdf")
+    #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
+    for wp in range(0,len(waypoint)-1):
+        p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        #print(waypoint[wp])
+        
+    for wp in range(0,len(target)-1):
+        p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        #print(waypoint[wp])
+    
     ########################################################################
     #list inserting test
 # a=[0,0,0,0]
