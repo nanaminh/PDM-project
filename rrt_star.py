@@ -237,7 +237,7 @@ if __name__ == "__main__":
     p.loadURDF("plane.urdf")
 
     rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 4])
-
+    #rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
     ######################DEBUG TEST1 stop after goal found###############################
     while 1:
 
