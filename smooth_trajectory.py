@@ -33,9 +33,11 @@ def getCoeff(k,n_order,ts):
     return coeff
 
 def getConstrainMtx(waypoints,n_order):
+    if len(waypoints)<2:
+        raise ValueError("The waypoint number should not be less than 2!!")
     start_pos=waypoints[:-1]
     goal_pos=waypoints[1:]
-    print("start",start_pos)
+    segment=len(start_pos)
     """
     return the constraint matrix, for single coordinate
     Args:
@@ -46,42 +48,43 @@ def getConstrainMtx(waypoints,n_order):
     Returns:
         np.array: the constraint matrix
     """
-    if len(start_pos)!=len(goal_pos):
-        raise ValueError("The dimension of input start and goal list not same")
+    # if segment!=segment:
+    #     raise ValueError("The dimension of input start and goal list not same")
+   
     
-    mtxA=np.zeros((len(goal_pos)*(n_order+1),len(goal_pos)*(n_order+1)))
-    mtxb=np.zeros(len(goal_pos)*(n_order+1))
+    mtxA=np.zeros((segment*(n_order+1),segment*(n_order+1)))
+    mtxb=np.zeros(segment*(n_order+1))
     #########################for Amtx####################################
     #1. waypoints constraint
     #p i (S i−1 ) = w i−1 and p i (S i ) = w i for all i = 1, . . . , n (2*len(segment) constraints)
-    for k in range(0,len(start_pos)):#index number
+    for k in range(0,segment):#index number
         mtxA[k,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,0)
-        mtxA[k+len(start_pos),k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,1)
+        mtxA[k+segment,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,1)
         
     #2.for start and goal, the derivative 1,2,3=0
     #p 1 (S 0 ) = p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
     for k in range(1,4):#derivative 1,2,3
-        # print(np.shape(mtxA[2*len(start_pos)+k,0:7]))
-        # print(np.shape(mtxA[2*len(start_pos)+3+k,-(n_order+1):]))
+        # print(np.shape(mtxA[2*segment+k,0:7]))
+        # print(np.shape(mtxA[2*segment+3+k,-(n_order+1):]))
         # print(np.shape(getCoeff(n_order,k,0)))
         # print(np.shape(getCoeff(n_order,k,1)))
-        mtxA[2*len(start_pos)+k-1,0:n_order+1] = getCoeff(k,n_order,0)
-        mtxA[2*len(start_pos)+3+k-1,-(n_order+1):] = getCoeff(k,n_order,1)
+        mtxA[2*segment+k-1,0:n_order+1] = getCoeff(k,n_order,0)
+        mtxA[2*segment+3+k-1,-(n_order+1):] = getCoeff(k,n_order,1)
         
     #3. continuity
     #p i (S i ) = p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
-    for n in range(2,len(start_pos)+1):
+    for n in range(2,segment+1):
         for k in range(1,7):#1-6
             # print("n",n)
             # print("k",k)
-            #mtxA[2*len(start_pos)+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
-            mtxA[2*len(start_pos)+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
-            mtxA[2*len(start_pos)+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
+            #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
+            mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
+            mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
     ############################for Bmtx########################################
-    mtxb = np.zeros((1,(n_order+1)*len(start_pos)))
-    for i in range(0,len(start_pos)):
+    mtxb = np.zeros((1,(n_order+1)*segment))
+    for i in range(0,segment):
         mtxb[0,i] = start_pos[i]
-        mtxb[0,i+(len(start_pos))] = goal_pos[i]
+        mtxb[0,i+(segment)] = goal_pos[i]
 
     
     print(np.shape(mtxA),np.shape(mtxb))
@@ -199,52 +202,52 @@ if __name__ == "__main__":
 ##############################trajectory generation and visualisation test###########################################
 
     
-    waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
-    #waypoint=[[0.4,0.4,1][0.8,0.8,1][1.2,0.4,1][1.5,0,1][1.8,0.4,1]]
-    # X=[0.4,0.8,1.2,1.5,1.8]
-    # x1=[0.4,0.8,1.2,1.5]
-    # x2=[0.8,1.2,1.5,1.8]
-    # Y=[0.4,0.8,0.4,0,0.4]
-    # y1=[0.4,0.8,0.4,0]
-    # y2=[0.8,0.4,0,0.4]
-   # print(np.shape(waypoint[:,0]))
-   #DEBUG : to np.array https://blog.csdn.net/a546167160/article/details/88398998
-    waypointx=np.array(waypoint)[:,0]
-    waypointy=np.array(waypoint)[:,1]
+#     waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
+#     #waypoint=[[0.4,0.4,1][0.8,0.8,1][1.2,0.4,1][1.5,0,1][1.8,0.4,1]]
+#     # X=[0.4,0.8,1.2,1.5,1.8]
+#     # x1=[0.4,0.8,1.2,1.5]
+#     # x2=[0.8,1.2,1.5,1.8]
+#     # Y=[0.4,0.8,0.4,0,0.4]
+#     # y1=[0.4,0.8,0.4,0]
+#     # y2=[0.8,0.4,0,0.4]
+#    # print(np.shape(waypoint[:,0]))
+#    #DEBUG : to np.array https://blog.csdn.net/a546167160/article/details/88398998
+#     waypointx=np.array(waypoint)[:,0]
+#     waypointy=np.array(waypoint)[:,1]
     
-    p.connect(p.GUI)
-    p.setAdditionalSearchPath(pd.getDataPath())
-    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
-    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    p.loadURDF("plane.urdf")
-    #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
-    for wp in range(0,len(waypoint)-1):
-        p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-        print(waypoint[wp])
+#     p.connect(p.GUI)
+#     p.setAdditionalSearchPath(pd.getDataPath())
+#     # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
+#     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+#     p.loadURDF("plane.urdf")
+#     #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
+#     for wp in range(0,len(waypoint)-1):
+#         p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+#         print(waypoint[wp])
         
         
-    segment=len(waypoint)-1
-    mtxAx,mtxbx=getConstrainMtx(waypointx,7)
-    param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
+#     segment=len(waypoint)-1
+#     mtxAx,mtxbx=getConstrainMtx(waypointx,7)
+#     param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
 
-    mtxAy,mtxby=getConstrainMtx(waypointy,7)
-    param_y=np.linalg.inv(mtxAy)@mtxby.T
-    # plt.plot(X, Y, color="blue", linewidth=2.5, linestyle="-")
-    # plt.show()
-    print(param_y)
-    midpointx=[]
-    midpointy=[]
-    step=0.1
+#     mtxAy,mtxby=getConstrainMtx(waypointy,7)
+#     param_y=np.linalg.inv(mtxAy)@mtxby.T
+#     # plt.plot(X, Y, color="blue", linewidth=2.5, linestyle="-")
+#     # plt.show()
+#     print(param_y)
+#     midpointx=[]
+#     midpointy=[]
+#     step=0.1
 
-    for seg in range(0,segment):
-        for i in np.arange(0,1+step,step):#ERROR:step 较小更好,注意+step
-            midpointx.append(float(getCoeff(0,7,i)@param_x[seg*8:(seg+1)*8]))
-            #print(i)
-            midpointy.append(float(getCoeff(0,7,i)@param_y[seg*8:(seg+1)*8]))
+#     for seg in range(0,segment):
+#         for i in np.arange(0,1+step,step):#ERROR:step 较小更好,注意+step
+#             midpointx.append(float(getCoeff(0,7,i)@param_x[seg*8:(seg+1)*8]))
+#             #print(i)
+#             midpointy.append(float(getCoeff(0,7,i)@param_y[seg*8:(seg+1)*8]))
     
-    waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
-    for wp in range(0,len(waypoints)-1):
-        p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+#     waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
+#     for wp in range(0,len(waypoints)-1):
+#         p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
     
     ############################################################################################
 
