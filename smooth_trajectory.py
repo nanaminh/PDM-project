@@ -103,8 +103,8 @@ def setTime(waypoints):
     for index in range(len(waypoints)-1):
         length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
         
-    T=3*np.array(length) 
-    S=3*np.cumsum(length)
+    T=3*np.array(length) #3 param is hard coded
+    S=np.cumsum(T)
     return T,S
 
 def generateTargetPos(waypoints,control_freq_hz):
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     for wp in range(0,len(waypoint)-1):
         p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
         #print(waypoint[wp])
-        
+    ###############################visualisation need some time#############################################
     for wp in range(0,len(target)-1):
         p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
         #print(waypoint[wp])
