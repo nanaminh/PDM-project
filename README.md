@@ -38,10 +38,21 @@ $ python3 base_rrt_test.py
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/trajectory_generation_test.png)
-WARNING: 
+
+07/01/2023
+To run the smooth trajectory in an environment without obstacles:
+```sh
+$ python3 smooth_trajectory.py 
+```
+To run the smooth_trajectory in an environment with obstacles and the drone will follow the trajectory:
+```sh
+$ python3 smooth_trajectory_test.py 
+```
+
+~~WARNING: 
 
 1.In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
 
-2.The trajectory generation is naive method. The drone cannot follow it perfectly.
+2.The trajectory generation is naive method. The drone cannot follow it perfectly.~~
 
 
