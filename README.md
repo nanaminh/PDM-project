@@ -48,7 +48,7 @@ To run the smooth_trajectory in an environment with obstacles and the drone will
 ```sh
 $ python3 smooth_trajectory_test.py 
 ```
-
+![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/smooth.png)
 ~~WARNING: 
 
 1.In order to make the test easier, the gym step function in `base_rrt_test.py`is commented, and there will be BUG after the simulation terminated, because of the usage of logger.save(). It will be debuged after generating feasible trajectory.
