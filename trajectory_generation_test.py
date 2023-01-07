@@ -106,6 +106,7 @@ def run(
     target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
     TARGET_POS=target
     NUM_WP=num
+    print(np.shape(target))
     #####################################################################################
     
     
@@ -203,11 +204,12 @@ def run(
                                                                        # target_pos=INIT_XYZS[j, :] + TARGET_POS[wp_counters[j], :],
                                                                        #target_rpy=INIT_RPYS[j, :]
                                                                        )#control 
-
+                
+                print("TARGET:",np.hstack(TARGET_POS[wp_counters[j], 0:3]))
             #### Go to the next way point and loop #####################
             for j in range(num_drones): 
                 wp_counters[j] = wp_counters[j] + 1 if wp_counters[j] < (NUM_WP-1) else 0
-
+  
         #### Log the simulation ####################################
         for j in range(num_drones):
             logger.log(drone=j,
