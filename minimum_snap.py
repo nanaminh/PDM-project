@@ -11,8 +11,9 @@ import matplotlib.pyplot as plt
 import pybullet_data as pd
 import pybullet as p
 import math
-from scipy.optimize import minimize
+from scipy.optimize import minimize, LinearConstraint
 from scipy.linalg import block_diag
+
 
 class minimum_snap:
     def __init__(self,waypoints):
@@ -71,7 +72,7 @@ class minimum_snap:
         # print(np.shape(Q))
         # print(Q)### PROBLEM([33,32])???
         
-        #####TO PREVENT DIMENSION PROBLEM############
+        ####TO PREVENT DIMENSION PROBLEM############
         coeff0=np.reshape(np.array(self.getCoeff(4,7,T[1])),(8,1))
         Q=coeff0@coeff0.T
         for t in T[1:]:
@@ -80,8 +81,20 @@ class minimum_snap:
             Q=block_diag(Q,tempQ)
         print(np.shape(Q))
         
+        
         return Q
     
+    def costFunc(self,x):
+        """cost function of minimum snap xtQx
+
+        Args:
+            x (array): parameters need to be optimized
+        """
+        Q=self.getmtxQ()
+        dimension=len(Q)
+        coeff=np.reshape(np.array(x),(dimension,1))
+        cost=coeff.T@Q@coeff
+        return cost
     def generateTargetPos(waypoints,control_freq_hz):
         return 0
     
@@ -92,3 +105,6 @@ if __name__ == "__main__":
     # print(setTime(waypoints))
     mini=minimum_snap(waypoint)
     Q=mini.getmtxQ()
+    print(len(Q))
+    x=np.zeros((1,32))
+    print(mini.costFunc(x))
