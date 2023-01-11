@@ -7,9 +7,9 @@
 
 import numpy as np
 import matplotlib as mpl
-import matplotlib.pyplot as plt
-import pybullet_data as pd
-import pybullet as p
+#import matplotlib.pyplot as plt
+#import pybullet_data as pd
+#import pybullet as p
 import math
 
 def getCoeff(k,n_order,ts):
@@ -32,19 +32,23 @@ def getCoeff(k,n_order,ts):
     
     return coeff
 
-def getConstrainMtx(waypoints,n_order):
+def getConstrainMtx(waypoints,n_order, dim):
+    waypoints= np.array(waypoints)
     if len(waypoints)<2:
         raise ValueError("The waypoint number should not be less than 2!!")
-    start_pos=waypoints[:-1]
-    goal_pos=waypoints[1:]
-    segment=len(start_pos)
+    start_pos= waypoints[:-1] # Start positions of segments
+    goal_pos= waypoints[1:]
+    segment=len(waypoints)-1 #Number of segments]
+    coordinates = {'x':0, 'y': 1, 'z':2}
+
     """
     return the constraint matrix, for single coordinate
     Args:
-        start_pos (list): start point of each sgment dim(1,n)
-        goal_pos (list): goal point of each sgment dim(1,n)
+        start_pos (list): start point of each segment dim(1,n)
+        goal_pos (list): goal point of each segment dim(1,n)
         n_order (int): order of polynomial
-
+        dim (char): x, y or z
+    
     Returns:
         np.array: the constraint matrix
     """
@@ -52,40 +56,49 @@ def getConstrainMtx(waypoints,n_order):
     #     raise ValueError("The dimension of input start and goal list not same")
    
     
-    mtxA=np.zeros((segment*(n_order+1),segment*(n_order+1)))
-    mtxb=np.zeros(segment*(n_order+1))
-    #########################for Amtx####################################
-    #1. waypoints constraint
+    mtxA = np.zeros((segment*(n_order+1),segment*(n_order+1)))
+    mtxb = np.zeros(((n_order+1)*segment, 1)) # segment -> number of the segment, n_order -> order of the polynominal
+
+    #1. waypoints constraint (row 0-7 when len(waypoints) is 5)
     #p i (S i−1 ) = w i−1 and p i (S i ) = w i for all i = 1, . . . , n (2*len(segment) constraints)
-    for k in range(0,segment):#index number
-        mtxA[k,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,0)
-        mtxA[k+segment,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,1)
-        
-    #2.for start and goal, the derivative 1,2,3=0
+    for i in range(0,segment):#index number
+        ##mtxA[k,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,0)
+        ##mtxA[k+segment,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,1)
+        mtxA[i, (n_order+1)*i+1] = 1 # first coefficient matches the start points
+        mtxA[segment+i, (n_order+1)*i+1:(n_order+1)*(i+1)] = 1 # coefficients match the end points
+
+        print(type(coordinates[dim]))
+        print(coordinates[dim])
+        mtxb[i,0] = start_pos[i, coordinates[dim]]
+        mtxb[i+(segment), 0] = goal_pos[i, coordinates[dim]]  #This for loop can be combined with the for loop above
+        print(i)
+        print(segment+i)
+
+    #2.for start and goal, the derivative 1,2,3=0 (row 8-13 when len(waypoints) is 5)
     #p 1 (S 0 ) = p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
     for k in range(1,4):#derivative 1,2,3
         # print(np.shape(mtxA[2*segment+k,0:7]))
         # print(np.shape(mtxA[2*segment+3+k,-(n_order+1):]))
-        # print(np.shape(getCoeff(n_order,k,0)))
-        # print(np.shape(getCoeff(n_order,k,1)))
-        mtxA[2*segment+k-1,0:n_order+1] = getCoeff(k,n_order,0)
-        mtxA[2*segment+3+k-1,-(n_order+1):] = getCoeff(k,n_order,1)
-        
+        #print(np.shape(getCoeff(n_order,k,0)))
+        #print(np.shape(getCoeff(n_order,k,1)))
+        mtxA[2*segment+k-1,0:n_order+1] = getCoeff(k,n_order,0) #start
+        mtxA[2*segment+3+k-1,-(n_order+1):] = getCoeff(k,n_order,1)  #goal
+        #print(2*segment+k)
+        #print(2*segment+3+k)
+
     #3. continuity
     #p i (S i ) = p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
-    for n in range(2,segment+1):
+    for n in range(1,segment):
         for k in range(1,7):#1-6
-            # print("n",n)
-            # print("k",k)
+            #print("n",n)
+            #print("k",k)
             #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
-            mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
-            mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
+            mtxA[2*segment+6+ 6*(n-1)+k-1, (n-1)*(n_order+1):n*(n_order+1)] = getCoeff(k,n_order,1) #error:bad operator - for list
+            #mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
+            mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order)+k+1] = -1 # to equate from the other side
+            #print(2*segment+6+ 6*(n-1)+k)
     ############################for Bmtx########################################
-    mtxb = np.zeros((1,(n_order+1)*segment))
-    for i in range(0,segment):
-        mtxb[0,i] = start_pos[i]
-        mtxb[0,i+(segment)] = goal_pos[i]
-
+    #This part is moved above to marge two for loop!!
     
     print(np.shape(mtxA),np.shape(mtxb))
     return mtxA,mtxb
@@ -132,7 +145,6 @@ def generateTargetPos(waypoints,control_freq_hz):
     param_y=np.linalg.inv(mtxAy)@mtxby.T
     mtxAz,mtxbz=getConstrainMtx(waypointz,7)
     param_z=np.linalg.inv(mtxAz)@mtxbz.T
-    
 
     midpointx=[]
     midpointy=[]
@@ -170,13 +182,22 @@ def generateTargetPos(waypoints,control_freq_hz):
 
 if __name__ == "__main__":
      ########################################################################
-    
+
     waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
     # print(setTime(waypoints))
-    target,num=generateTargetPos(waypoint,control_freq_hz=48)
-    print(num)
+    #target,num=generateTargetPos(waypoint,control_freq_hz=48)
+    #print(num)
+
+    #print(getConstrainMtx(waypoints= waypoint, n_order =7, dim='x'))
+    A, b = getConstrainMtx(waypoints= waypoint, n_order =7, dim='x')
+    print(A[0:2, :])
+    print(b[0:2, :])
+    print(np.linalg.det(A))
+    alpha = np.linalg.solve(A[0:2, 0:], b[0:2, :]) #This does not work because A is a singular matrix
+
     
-    
+
+
     # p.connect(p.GUI)
     # p.setAdditionalSearchPath(pd.getDataPath())
     # # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
