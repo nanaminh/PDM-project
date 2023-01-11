@@ -1,8 +1,8 @@
 #######
-# RO47005 Planning and decision making 22/23
+# RO47005 Planning and decision-making 22/23
 # Group:10
-# Aurthor: Danning Zhao
-# email: D.ZHAO-3@student.tudelft.nl
+# Author: Abel van Elburg
+# email: a.t.g.vanelburg@student.tudelft.nl
 #######
 import numpy as np
 import pybullet as p
@@ -10,7 +10,7 @@ import pybullet_data as pd
 import time
 
 
-class rrt_node():
+class Node:
     """
     a structure contains information of RRT tree nodes
     coordiantes x,y,z
@@ -23,9 +23,23 @@ class rrt_node():
         self.dist = dist  # dist to root
 
 
-class basic_rrt():
+def visualisation(start_pos, goal_pos):
+    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+
+
+def collision_check(start_pos, goal_pos):
+    collision = False
+    result = p.rayTest(list(start_pos), list(goal_pos))[0][
+        0]  # get the collision object id, if==-1, then no collision
+    # print(result)
+    if result != -1:
+        collision = True
+    return collision
+
+
+class RRTStar:
     """
-    basic RRT
+    RRT*
 
     """
 
@@ -53,6 +67,7 @@ class basic_rrt():
         self.first_arrive = True
         self.goal_index = -1  # the index of goal node, for back tracing
         self.tree = []
+        self.shortest_path = -1  # distance from goal to root, -1 if no path is found
 
         ####################################
         self.trajectory_back = []  #
@@ -61,120 +76,114 @@ class basic_rrt():
         self.end_pos = []
         #########################################
 
-        root = rrt_node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
-        self.push_newnode(root)  # push the root, index=0
-        ##visualize the start and goal position with a line
+        root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
+        self.push_new_node(root)  # push the root, index=0
+        # visualize the start and goal position with a line
         print("start and goal", self.start, self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
     def step(self):
-        # 1.random sample
+        # 1. Get random sample
         random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i]) + 1 for i in
                                     range(0, 3)])  # +1 is for a larger sample space
-        # print("random_position",random_position)
-        # 2.find nearest node in the tree
+
+        # 2. Find the nearest node in the tree
         min_distance = 100000
-        min_index = 0
+        min_index = None
+        min_position = None
         for i in range(0, self.index + 1):
             diff_coordinate = random_position - self.tree[i].position
             euler_distance = np.linalg.norm(diff_coordinate)
             if euler_distance < min_distance:
                 min_distance = euler_distance
                 min_index = i
-
+                min_position = diff_coordinate
         node_nearest = self.tree[min_index]
 
-        # 3.check collision free
-        collision = self.collision_check(node_nearest.position, random_position)
+        # 3. Check if the path to the node is collision free
+        collision = collision_check(node_nearest.position, random_position)
         if not collision:
-
-            # 4. push new node
-            normalized = diff_coordinate / euler_distance * self.delta
-            new_position = node_nearest.position + normalized
-            node_new = rrt_node(new_position, min_index, node_nearest.dist + self.delta)  # generate node_new
-            self.push_newnode(node_new)
-
-            new_index = len(self.tree)
+            # 4. Push new node to the tree
+            # normalized = diff_coordinate / euler_distance * self.delta
+            new_position = node_nearest.position + min_position
+            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
+            self.push_new_node(node_new)
 
             # 5. Search other possible parents
-            node_near_list = []
+            nodes_near_list = [min_index]
             near_count = 0
             near_index = min_index
-            node_dist = np.linalg.norm(node_new.position - node_nearest.position) + self.tree[min_index].dist
-            radius = 1  # without this it will always use a straight line to the origin (if there are no obstacles)
+            shortest_dist = node_new.dist
+            neighbourhood_radius = 1
             for i in range(0, self.index + 1):
                 node_near_temp = self.tree[i]
                 node_near_dist = np.linalg.norm(node_near_temp.position - node_new.position)
-                dist = np.linalg.norm(node_new.position - node_near_temp.position) + self.tree[i].dist
-                if node_near_dist < radius:
-                    collision = self.collision_check(node_near_temp.position, node_new.position)
+                if node_near_dist < neighbourhood_radius:
+                    collision = collision_check(node_near_temp.position, node_new.position)
                     if not collision:
                         near_count += 1
-                        node_near_list.append(i)
-                        if dist < node_dist:
-                            node_dist = dist
+                        nodes_near_list.append(i)
+                        temp_dist = node_near_dist + node_near_temp.dist
+                        if temp_dist < shortest_dist:
+                            shortest_dist = temp_dist
                             near_index = i
 
+            # 6. (Re-)attach the node to the best parent
             node_near = self.tree[near_index]
-            # print(node_near.position)
+            node_new.index_parent = near_index
+            node_new.dist = shortest_dist
+            visualisation(list(node_near.position), list(new_position))
 
-
-            # 6. Rewiring
-            node_near_list.append(min_index)
-            M = len(node_near_list)
-
-            for i in range(M):
-                node = self.tree[node_near_list[i]]
-                prev_node = self.tree[self.tree[node_near_list[i]].index_parent]
-                near_dist = self.tree[node_near_list[i]].dist
+            # 7. Rewiring nodes to new node (if distance becomes shorter)
+            for i in range(near_count):
+                node = self.tree[nodes_near_list[i]]
+                # prev_node = self.tree[node.index_parent]
+                current_dist = node.dist
                 new_dist = node_new.dist + np.linalg.norm(node.position - node_new.position)
-                if near_dist > new_dist:
-                    self.tree[node_near_list[i]].index_parent = new_index
-                    self.tree[node_near_list[i]].dist = new_dist
-                    p.addUserDebugLine(node.position, prev_node.position, lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=1)
-                    p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=1)
-
-                    # self.visualisation(list(node.position), list(prev_node.position))
+                if new_dist < current_dist:
+                    node.index_parent = self.index
+                    node.dist = new_dist
+                    # p.addUserDebugLine(node.position, prev_node.position, lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=1)
+                    p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
+                                       lineWidth=1)
                     # self.visualisation(list(node.position), list(node_new.position))
 
-            # self.visualisation(list(node_nearest.position), list(new_position))
-            self.visualisation(list(node_near.position), list(new_position))
-
-            # print("index",self.index)
-            # 5.check whether the goal is reached
-            distance_togoal = np.linalg.norm(new_position - np.array(self.goal))
-            if distance_togoal < self.threshold:
-                print("Goal FOUND!")
+            # 8. Check whether the goal is reached, and if it is an improvement
+            distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
+            if distance_to_goal < self.threshold:
                 if self.first_arrive:  # push the goal into the tree when arrive at first time, and backtrace
-                    goal_node = rrt_node(np.array(self.goal), self.index,
-                                         node_new.dist + distance_togoal)  # the goal's parent is the new node
-                    self.push_newnode(goal_node)
-                    self.visualisation(list(new_position), self.goal)
-
+                    print("Goal FOUND!")
                     self.goal_found = True
-                    self.first_arrive = False
+
+                    goal_node = Node(np.array(self.goal), self.index,
+                                     node_new.dist + distance_to_goal)  # the goal's parent is the new node
+
                     self.goal_index = self.index
+                    self.shortest_path = goal_node.dist
+                    self.push_new_node(goal_node)
+                    visualisation(list(new_position), self.goal)
 
-                    # 6.trace back
+                    # 9a. Trace back to start
                     self.backtracing()
+                    self.first_arrive = False
+                else:
+                    new_goal_node = Node(np.array(self.goal), self.index,
+                                         node_new.dist + distance_to_goal)
+                    if new_goal_node.dist < self.shortest_path:
+                        print("better path found!")
 
+                        self.goal_index = self.index
+                        self.shortest_path = new_goal_node.dist
+                        self.push_new_node(new_goal_node)
+                        visualisation(list(new_position), self.goal)
+
+                        # 9b. Trace back to start
+                        self.backtracing()
         # return self.goal_found
 
-    def push_newnode(self, node):
+    def push_new_node(self, node):
         self.tree.append(node)
         self.index += 1  # update the current index
-
-    def collision_check(self, start_pos, goal_pos):
-        collision = False
-        result = p.rayTest(list(start_pos), list(goal_pos))[0][
-            0]  # get the collision object id, if==-1, then no collision
-        # print(result)
-        if result != -1:
-            collision = True
-        return collision
-
-    def visualisation(self, start_pos, goal_pos):
-        p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
 
     def backtracing(self):
         """
@@ -218,7 +227,7 @@ class basic_rrt():
         print(np.shape(self.start_pos))
         print(np.shape(self.end_pos))
 
-    # deubg test
+    # debug test
 
 
 if __name__ == "__main__":
@@ -236,13 +245,13 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.loadURDF("plane.urdf")
 
-    rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 4])
-    #rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
+    rrt_star = RRTStar([0.5, 0.5, 0.5], [4, 4, 4])
+    # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
+
     ######################DEBUG TEST1 stop after goal found###############################
-    while 1:
-
-        # time.sleep(0.05)
-        if rrt.goal_found == False:  # if the goal haven't been found
-            rrt.step()
-
+    while rrt_star.index <= 1000:  # Limit in the amount of nodes.
+        rrt_star.step()
     ######################DEBUG TEST1 END#######################################################
+
+    print("FINISHED")
+    print("Shortest path found: ", rrt_star.tree[rrt_star.goal_index].dist)
