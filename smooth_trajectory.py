@@ -97,7 +97,7 @@ def getConstrainMtx(waypoints,n_order, dim):
             mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
             mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
             #mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
-            mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order+1):((n+1)*(n_order+1))] = -np.array(getCoeff(k,n_order,0)) # to equate from the other side
+            #mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order+1):((n+1)*(n_order+1))] = -np.array(getCoeff(k,n_order,0)) # to equate from the other side
 
             #mtxA[2 * segment + 6 + (n - 2) * 6 + k - 1, (n - 2) * (n_order + 1):((n - 1) * (n_order + 1))] = getCoeff(k,n_order, 1)
             #mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order)+k+1] = -1 # to equate from the other side
