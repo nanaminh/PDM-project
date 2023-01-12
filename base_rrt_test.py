@@ -30,7 +30,7 @@ from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ####
-from base_rrt import basic_rrt
+from base_rrt import RRT
 from  bang_bang import tj_from_multilines
 ####
 
@@ -139,7 +139,7 @@ def run(
     #pre_pos = [0, 0, 0]
     
     ##initialize rrt
-    rrt=basic_rrt([0,0,0],[4,4,4])
+    rrt=RRT([0, 0, 0], [4, 4, 4])
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ

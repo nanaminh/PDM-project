@@ -4,17 +4,15 @@
 # Author: Abel van Elburg
 # email: a.t.g.vanelburg@student.tudelft.nl
 #######
-import numpy as np
 import pybullet as p
 import pybullet_data as pd
-import time
 from informed_sampling import *
 
 
 class Node:
     """
     a structure contains information of RRT tree nodes
-    coordiantes x,y,z
+    coordinates x,y,z
     index of the node's parent
     """
 
@@ -81,7 +79,7 @@ class InformedRRTStar:
         self.push_new_node(root)  # push the root, index=0
         # visualize the start and goal position with a line
         print("start and goal", self.start, self.goal)
-        # p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+        p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
@@ -143,7 +141,7 @@ class InformedRRTStar:
             node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
-            # visualisation(list(node_near.position), list(new_position))
+            visualisation(list(node_near.position), list(new_position))
 
             # 7. Rewiring nodes to new node (if distance becomes shorter)
             for i in range(near_count):
@@ -153,8 +151,8 @@ class InformedRRTStar:
                 if new_dist < current_dist:
                     node.index_parent = self.index
                     node.dist = new_dist
-                    # p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
-                    #                    lineWidth=0.5)
+                    p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
+                                       lineWidth=0.5)
 
             # 8. Check whether the goal is reached, and if it is an improvement
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
@@ -168,7 +166,7 @@ class InformedRRTStar:
                     self.push_new_node(goal_node)
                     self.goal_index = self.index
                     self.shortest_path = goal_node.dist
-                    # visualisation(list(new_position), self.goal)
+                    visualisation(list(new_position), self.goal)
 
                     # 9a. Trace back to start
                     self.backtracing()
@@ -181,7 +179,7 @@ class InformedRRTStar:
                         self.push_new_node(new_goal_node)
                         self.goal_index = self.index
                         self.shortest_path = new_goal_node.dist
-                        # visualisation(list(new_position), self.goal)
+                        visualisation(list(new_position), self.goal)
 
                         # 9b. Trace back to start
                         self.backtracing()
@@ -251,19 +249,19 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.loadURDF("plane.urdf")
 
-    info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
-    #myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
+    info_rrt_star = InformedRRTStar([0.5, 0.5, 0.5], [4, 4, 4])
+    # info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
+    # myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
 
-    spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2, 1.1],[0.5, 2, 1.1]]
-    for spawnpoint in spawnpoints:
-        p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
+    # spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2,
+    # 1.1],[0.5, 2, 1.1]] for spawnpoint in spawnpoints: p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
 
-    
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
-    while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
-        info_rrt_star.step()
+    while 1:
+        while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
+            info_rrt_star.step()
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")
