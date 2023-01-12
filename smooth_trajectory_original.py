@@ -80,6 +80,7 @@ def getConstrainMtx(waypoints,n_order):
             #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
             mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
             mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
+            #print("coefficient",-np.array(getCoeff(k,n_order,0)))
     ############################for Bmtx########################################
     mtxb = np.zeros((1,(n_order+1)*segment))
     for i in range(0,segment):
@@ -87,7 +88,7 @@ def getConstrainMtx(waypoints,n_order):
         mtxb[0,i+(segment)] = goal_pos[i]
 
     
-    print(np.shape(mtxA),np.shape(mtxb))
+    #print(np.shape(mtxA),np.shape(mtxb))
     return mtxA,mtxb
 
 def setTime(waypoints):

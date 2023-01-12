@@ -67,12 +67,12 @@ def getConstrainMtx(waypoints,n_order, dim):
         mtxA[i, (n_order+1)*i+1] = 1 # first coefficient matches the start points
         mtxA[segment+i, (n_order+1)*i+1:(n_order+1)*(i+1)] = 1 # coefficients match the end points
 
-        print(type(coordinates[dim]))
-        print(coordinates[dim])
+        # print(type(coordinates[dim]))
+        # print(coordinates[dim])
         mtxb[i,0] = start_pos[i, coordinates[dim]]
         mtxb[i+(segment), 0] = goal_pos[i, coordinates[dim]]  #This for loop can be combined with the for loop above
-        print(i)
-        print(segment+i)
+        # print(i)
+        # print(segment+i)
 
     #2.for start and goal, the derivative 1,2,3=0 (row 8-13 when len(waypoints) is 5)
     #p 1 (S 0 ) = p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
@@ -88,19 +88,21 @@ def getConstrainMtx(waypoints,n_order, dim):
 
     #3. continuity
     #p i (S i ) = p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
-    for n in range(1,segment):
-        for k in range(1,7):#1-6
+    for n in range(2,segment+1):
+        for k in range(1,3):#1-6
             #print("n",n)
             #print("k",k)
             #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
-            mtxA[2*segment+6+ 6*(n-1)+k-1, (n-1)*(n_order+1):n*(n_order+1)] = getCoeff(k,n_order,1) #error:bad operator - for list
+            #mtxA[2*segment+6+ 6*(n-1)+k-1, (n-1)*(n_order+1):n*(n_order+1)] = getCoeff(k,n_order,1) #error:bad operator - for list
+            mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
+            mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
             #mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
-            mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order)+k+1] = -1 # to equate from the other side
+            #mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order)+k+1] = -1 # to equate from the other side
             #print(2*segment+6+ 6*(n-1)+k)
     ############################for Bmtx########################################
     #This part is moved above to marge two for loop!!
     
-    print(np.shape(mtxA),np.shape(mtxb))
+    #print(np.shape(mtxA),np.shape(mtxb))
     return mtxA,mtxb
 
 def setTime(waypoints):
