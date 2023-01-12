@@ -25,7 +25,7 @@ class Node:
 
 
 def visualisation(start_pos, goal_pos):
-    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
 
 
 def collision_check(start_pos, goal_pos):
@@ -38,7 +38,7 @@ def collision_check(start_pos, goal_pos):
     return collision
 
 
-class RRTStar:
+class InformedRRTStar:
     """
     RRT*
 
@@ -81,7 +81,7 @@ class RRTStar:
         self.push_new_node(root)  # push the root, index=0
         # visualize the start and goal position with a line
         print("start and goal", self.start, self.goal)
-        p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+        # p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
@@ -143,7 +143,7 @@ class RRTStar:
             node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
-            visualisation(list(node_near.position), list(new_position))
+            # visualisation(list(node_near.position), list(new_position))
 
             # 7. Rewiring nodes to new node (if distance becomes shorter)
             for i in range(near_count):
@@ -153,8 +153,8 @@ class RRTStar:
                 if new_dist < current_dist:
                     node.index_parent = self.index
                     node.dist = new_dist
-                    p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
-                                       lineWidth=1)
+                    # p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
+                    #                    lineWidth=0.5)
 
             # 8. Check whether the goal is reached, and if it is an improvement
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
@@ -168,7 +168,7 @@ class RRTStar:
                     self.push_new_node(goal_node)
                     self.goal_index = self.index
                     self.shortest_path = goal_node.dist
-                    visualisation(list(new_position), self.goal)
+                    # visualisation(list(new_position), self.goal)
 
                     # 9a. Trace back to start
                     self.backtracing()
@@ -181,7 +181,7 @@ class RRTStar:
                         self.push_new_node(new_goal_node)
                         self.goal_index = self.index
                         self.shortest_path = new_goal_node.dist
-                        visualisation(list(new_position), self.goal)
+                        # visualisation(list(new_position), self.goal)
 
                         # 9b. Trace back to start
                         self.backtracing()
@@ -206,7 +206,7 @@ class RRTStar:
             self.trajectory_back.append(self.tree[index])
             parent_index = self.tree[index].index_parent
             p.addUserDebugLine(list(self.tree[parent_index].position), list(self.tree[index].position),
-                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3)
+                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3.0)
             index = parent_index
 
         self.trajectory_back.append(self.tree[0])  # push the root node
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.loadURDF("plane.urdf")
 
-    rrt_star = RRTStar([0, 0.1, 0.1], [0, 4, 0.1])
+    info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
     #myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
 
     spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2, 1.1],[0.5, 2, 1.1]]
@@ -262,9 +262,9 @@ if __name__ == "__main__":
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
-    while rrt_star.index <= 1000:  # Limit in the amount of nodes.
-        rrt_star.step()
+    while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
+        info_rrt_star.step()
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")
-    print("Shortest path found: ", rrt_star.tree[rrt_star.goal_index].dist)
+    print("Shortest path found: ", info_rrt_star.tree[info_rrt_star.goal_index].dist)
