@@ -73,11 +73,12 @@ class informed_rrt():
             random_position = np.array([np.random.random_sample()*(self.goal[i]-self.start[i])+1 for i in range(0,3)])#+1 is for a larger sample space
         else:
             random_position = informed_sample(np.array(self.start),np.array(self.goal),self.tree[self.goal_index].dist)
-            p.addUserDebugLine(self.start, random_position, lineColorRGB=[1, 0, 1], lifeTime=100, lineWidth=3)
-            print("random_position=",random_position)
+            #for debugging
+            #p.addUserDebugLine(self.start, random_position, lineColorRGB=[1, 0, 1], lifeTime=100, lineWidth=3)
+            #print("random_position=",random_position)
             for i in range(800):
-                random_position = informed_sample(np.array(self.start),np.array(self.goal),self.tree[self.goal_index].dist)
-                p.addUserDebugLine([3,3,3], random_position, lineColorRGB=[1, 0, 1], lifeTime=100, lineWidth=3)
+               random_position = informed_sample(np.array(self.start),np.array(self.goal),self.tree[self.goal_index].dist)
+               p.addUserDebugLine([3,3,3], random_position, lineColorRGB=[1, 0, 1], lifeTime=100, lineWidth=3)
             
 
         #print("random_position",random_position)

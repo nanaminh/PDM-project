@@ -8,7 +8,7 @@ n_order = 7
 waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
 mini=minimum_snap(waypoint)
 
-x_init = np.ones((n_order+1)*(len(waypoint)-1)) #create a initial guess with ones
+x_init = np.ones((n_order+1)*(len(waypoint)-1))*3 #create a initial guess with ones
 
 print("ans", np.array([4, 4]- np.array([2, 1])))
 
