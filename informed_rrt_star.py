@@ -4,17 +4,15 @@
 # Author: Abel van Elburg
 # email: a.t.g.vanelburg@student.tudelft.nl
 #######
-import numpy as np
 import pybullet as p
 import pybullet_data as pd
-import time
 from informed_sampling import *
 
 
 class Node:
     """
     a structure contains information of RRT tree nodes
-    coordiantes x,y,z
+    coordinates x,y,z
     index of the node's parent
     """
 
@@ -25,7 +23,7 @@ class Node:
 
 
 def visualisation(start_pos, goal_pos):
-    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
 
 
 def collision_check(start_pos, goal_pos):
@@ -38,7 +36,7 @@ def collision_check(start_pos, goal_pos):
     return collision
 
 
-class RRTStar:
+class InformedRRTStar:
     """
     RRT*
 
@@ -86,7 +84,7 @@ class RRTStar:
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
         if not self.goal_found:
-            random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i]) + 1 for i in
+            random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i] + 1) for i in
                                         range(0, 3)])  # +1 is for a larger sample space
         else:
             random_position = informed_sample(np.array(self.start), np.array(self.goal),
@@ -154,7 +152,7 @@ class RRTStar:
                     node.index_parent = self.index
                     node.dist = new_dist
                     p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
-                                       lineWidth=1)
+                                       lineWidth=0.5)
 
             # 8. Check whether the goal is reached, and if it is an improvement
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
@@ -206,7 +204,7 @@ class RRTStar:
             self.trajectory_back.append(self.tree[index])
             parent_index = self.tree[index].index_parent
             p.addUserDebugLine(list(self.tree[parent_index].position), list(self.tree[index].position),
-                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3)
+                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3.0)
             index = parent_index
 
         self.trajectory_back.append(self.tree[0])  # push the root node
@@ -251,13 +249,20 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.loadURDF("plane.urdf")
 
-    rrt_star = RRTStar([0.5, 0.5, 0.5], [4, 4, 4])
+    info_rrt_star = InformedRRTStar([0.5, 0.5, 0.5], [4, 4, 4])
+    # info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
+    # myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
+
+    # spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2,
+    # 1.1],[0.5, 2, 1.1]] for spawnpoint in spawnpoints: p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
+
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
-    while rrt_star.index <= 1000:  # Limit in the amount of nodes.
-        rrt_star.step()
+    while 1:
+        while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
+            info_rrt_star.step()
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")
-    print("Shortest path found: ", rrt_star.tree[rrt_star.goal_index].dist)
+    print("Shortest path found: ", info_rrt_star.tree[info_rrt_star.goal_index].dist)
