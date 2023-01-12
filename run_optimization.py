@@ -10,8 +10,6 @@ mini=minimum_snap(waypoint)
 
 x_init = np.ones((n_order+1)*(len(waypoint)-1))*3 #create a initial guess with ones
 
-print("ans", np.array([4, 4]- np.array([2, 1])))
-
 "--- set the constraint in a way to be put in a solver ---"
 def const(x):
     Amat, bmat = getConstrainMtx(waypoints= waypoint ,n_order=7, dim= 'z')
@@ -27,6 +25,5 @@ con1 = {'type':'eq','fun':const}
 
 "--- Run optimization solver ---"
 res = optimize.minimize(fun= mini.costFunc, x0 = x_init, method='BFGS', constraints= (con1))
-
 
 print("result", res.x)

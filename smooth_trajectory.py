@@ -97,12 +97,17 @@ def getConstrainMtx(waypoints,n_order, dim):
             mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
             mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
             #mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
+            #mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order+1):((n+1)*(n_order+1))] = -np.array(getCoeff(k,n_order,0)) # to equate from the other side
+
+            #mtxA[2 * segment + 6 + (n - 2) * 6 + k - 1, (n - 2) * (n_order + 1):((n - 1) * (n_order + 1))] = getCoeff(k,n_order, 1)
             #mtxA[2*segment+6+ 6*(n-1)+k-1, n*(n_order)+k+1] = -1 # to equate from the other side
             #print(2*segment+6+ 6*(n-1)+k)
     ############################for Bmtx########################################
     #This part is moved above to marge two for loop!!
-    
+
+    print("A and b", np.shape(mtxA),np.shape(mtxb))
     #print(np.shape(mtxA),np.shape(mtxb))
+
     return mtxA,mtxb
 
 def setTime(waypoints):
@@ -177,8 +182,6 @@ def generateTargetPos(waypoints,control_freq_hz):
     # for wp in range(0,len(waypoints)-1):
     #     p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
     
-    
-    
     return target,num
     
 
@@ -192,10 +195,11 @@ if __name__ == "__main__":
 
     #print(getConstrainMtx(waypoints= waypoint, n_order =7, dim='x'))
     A, b = getConstrainMtx(waypoints= waypoint, n_order =7, dim='x')
-    print(A[0:2, :])
-    print(b[0:2, :])
+    #print(A[0:2, :])
+    #print(b[0:2, :])
+
     print(np.linalg.det(A))
-    alpha = np.linalg.solve(A[0:2, 0:], b[0:2, :]) #This does not work because A is a singular matrix
+    alpha = np.linalg.solve(A, b) #This does not work because A is a singular matrix
 
     
 
