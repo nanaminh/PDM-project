@@ -28,7 +28,7 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ###############################################
 from bang_bang import tj_from_multilines
-from smooth_trajectory import generateTargetPos
+from smooth_trajectory_original import generateTargetPos
 ###############################################
 
 DEFAULT_DRONES = DroneModel("cf2x")
