@@ -86,7 +86,7 @@ class RRTStar:
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
         if not self.goal_found:
-            random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i]) + 1 for i in
+            random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i] + 1) for i in
                                         range(0, 3)])  # +1 is for a larger sample space
         else:
             random_position = informed_sample(np.array(self.start), np.array(self.goal),
@@ -251,7 +251,14 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.loadURDF("plane.urdf")
 
-    rrt_star = RRTStar([0.5, 0.5, 0.5], [4, 4, 4])
+    rrt_star = RRTStar([0, 0.1, 0.1], [0, 4, 0.1])
+    #myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
+
+    spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2, 1.1],[0.5, 2, 1.1]]
+    for spawnpoint in spawnpoints:
+        p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
+
+    
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
