@@ -253,7 +253,7 @@ if __name__ == "__main__":
     # segment=len(x1)
 
     # mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
-    # param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
+    # param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular matrix, there is somethin gwrong with the matrix defined
 
     # mtxAy,mtxby=getConstrainMtx(y1,y2,7)
     # param_y=np.linalg.inv(mtxAy)@mtxby.T
@@ -265,7 +265,7 @@ if __name__ == "__main__":
     # step=0.1
 
     # for seg in range(0,segment):
-    #     for i in np.arange(0,1+step,step):#ERROR:step 较小更好,注意+step
+    #     for i in np.arange(0,1+step,step):
     #         midpointx.append(float(getCoeff(0,7,i)@param_x[seg*8:(seg+1)*8]))
     #         #print(i)
     #         midpointy.append(float(getCoeff(0,7,i)@param_y[seg*8:(seg+1)*8]))
@@ -277,7 +277,7 @@ if __name__ == "__main__":
         # x1=[40,80]
     # x2=[80,120]
     # mtxAx,mtxbx=getConstrainMtx(x1,x2,7)
-    #进行debug,发现第4行全为0，即index出现问题
+    #DEBUG:Find the fourth floor is all zeros, there is something wrong with index
     # print(np.shape(mtxAx))
     # param_x=np.linalg.inv(mtxAx)@mtxbx.T
 ##############################trajectory generation and visualisation test###########################################
@@ -292,7 +292,7 @@ if __name__ == "__main__":
 #     # y1=[0.4,0.8,0.4,0]
 #     # y2=[0.8,0.4,0,0.4]
 #    # print(np.shape(waypoint[:,0]))
-#    #DEBUG : to np.array https://blog.csdn.net/a546167160/article/details/88398998
+#    #DEBUG : to np.array 
 #     waypointx=np.array(waypoint)[:,0]
 #     waypointy=np.array(waypoint)[:,1]
     
@@ -309,7 +309,7 @@ if __name__ == "__main__":
         
 #     segment=len(waypoint)-1
 #     mtxAx,mtxbx=getConstrainMtx(waypointx,7)
-#     param_x=np.linalg.inv(mtxAx)@mtxbx.T#ERROR:singular,说明矩阵错误
+#     param_x=np.linalg.inv(mtxAx)@mtxbx.T#
 
 #     mtxAy,mtxby=getConstrainMtx(waypointy,7)
 #     param_y=np.linalg.inv(mtxAy)@mtxby.T
@@ -321,7 +321,7 @@ if __name__ == "__main__":
 #     step=0.1
 
 #     for seg in range(0,segment):
-#         for i in np.arange(0,1+step,step):#ERROR:step 较小更好,注意+step
+#         for i in np.arange(0,1+step,step):
 #             midpointx.append(float(getCoeff(0,7,i)@param_x[seg*8:(seg+1)*8]))
 #             #print(i)
 #             midpointy.append(float(getCoeff(0,7,i)@param_y[seg*8:(seg+1)*8]))

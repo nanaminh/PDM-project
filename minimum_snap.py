@@ -95,6 +95,7 @@ class minimum_snap:
         coeff=np.reshape(np.array(x),(dimension,1))
         cost=coeff.T@Q@coeff
         return cost
+    
     def generateTargetPos(waypoints,control_freq_hz):
         return 0
     
