@@ -1,6 +1,13 @@
 import numpy as np
 
 
+def sampling_sphere():
+    sample = [2 * np.random.random_sample() - 1, 2 * np.random.random_sample() - 1, 2 * np.random.random_sample() - 1]
+    if (sample[0] ** 2 + sample[1] ** 2 + sample[2] ** 2 < 1.0):
+        return sample
+    return sampling_sphere()
+
+
 def informed_sample(x_start, x_goal, c_best):
     # prepare
     c_min = np.linalg.norm(x_start - x_goal)
@@ -19,17 +26,9 @@ def informed_sample(x_start, x_goal, c_best):
 
     # rotation matrix from ellipsoid frame to world frame
     C = np.matmul(np.matmul(U, D), Vt)
-    # print("C=",C)
 
     # step2unified sample in ball radius=1
-    r = np.random.random_sample()
-    theta = 2 * np.pi * np.random.random_sample()
-    phi = np.arccos(1 - 2 * np.random.random_sample())
-    x = r * np.sin(phi) * np.cos(theta)
-    y = r * np.sin(phi) * np.sin(theta)
-    z = r * np.cos(phi)
-
-    sample = [x, y, z]
+    sample = sampling_sphere()
     new_node = sample
 
     r1 = c_best / 2
