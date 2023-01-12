@@ -32,7 +32,7 @@ def getCoeff(k,n_order,ts):
     
     return coeff
 
-def getConstrainMtx(waypoints,n_order):
+def getConstrainMtx(waypoints,n_order,derivative=7):
     if len(waypoints)<2:
         raise ValueError("The waypoint number should not be less than 2!!")
     start_pos=waypoints[:-1]
@@ -62,7 +62,7 @@ def getConstrainMtx(waypoints,n_order):
         mtxA[k+segment,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,1)
         
     #2.for start and goal, the derivative 1,2,3=0
-    #p 1 (S 0 ) = p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
+    #p 1 (S 0 ) - p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
     for k in range(1,4):#derivative 1,2,3
         # print(np.shape(mtxA[2*segment+k,0:7]))
         # print(np.shape(mtxA[2*segment+3+k,-(n_order+1):]))
@@ -72,14 +72,14 @@ def getConstrainMtx(waypoints,n_order):
         mtxA[2*segment+3+k-1,-(n_order+1):] = getCoeff(k,n_order,1)
         
     #3. continuity
-    #p i (S i ) = p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
+    #p i (S i ) - p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
     for n in range(2,segment+1):
-        for k in range(1,7):#1-6
+        for k in range(1,derivative):############original (1,7)1-6
             # print("n",n)
             # print("k",k)
             #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
-            mtxA[2*segment+6+(n-2)*6+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
-            mtxA[2*segment+6+(n-2)*6+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
+            mtxA[2*segment+6+(n-2)*(derivative-1)+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
+            mtxA[2*segment+6+(n-2)*(derivative-1)+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
             #print("coefficient",-np.array(getCoeff(k,n_order,0)))
     ############################for Bmtx########################################
     mtxb = np.zeros((1,(n_order+1)*segment))
