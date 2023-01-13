@@ -195,5 +195,7 @@ if __name__ == "__main__":
     while 1:
         if not rrt.goal_found:  # if the goal haven't been found
             rrt.step()
+            
+        # print(np.array(rrt.trajectory_back))
 
     ######################DEBUG TEST1 END#######################################################
