@@ -16,6 +16,7 @@ class minimum_snap_corridor(minimum_snap):
             waypoints (list): a list of 3D positions
         """
         super().__init__(waypoints)
+        self.samples=[]#samples for inequality contraints
         #self.waypoints=waypoints
     def setTime(self):
         """
@@ -128,8 +129,8 @@ class minimum_snap_corridor(minimum_snap):
         mtxG_middle = np.zeros((2*(segment-1), n_all_poly))
         mtxh_middle = np.zeros((2*(segment-1), 1))
         for k in range(0,segment-1):#index number
-            mtxh_middle[k] = waypoints[k+1]+corridor
-            mtxh_middle[k+segment-1] = -(waypoints[k+1]-corridor)
+            mtxh_middle[k] = waypoints[k+1]+corridor/5
+            mtxh_middle[k+segment-1] = -(waypoints[k+1]-corridor/5)
             mtxG_middle[k,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,T[k])
             mtxG_middle[k+segment-1,k*(n_order+1):(k+1)*(n_order+1)]=-np.array(self.getCoeff(0,n_order,T[k]))
 
@@ -142,6 +143,7 @@ class minimum_snap_corridor(minimum_snap):
         time=self.sampling(number=number_sampling)
         mtxG_sample = np.zeros((2*number_sampling*segment, n_all_poly))
         mtxh_sample = np.zeros((2*number_sampling*segment, 1))
+        samples=[]
         for k in range(0,segment):#index number
             delta_waypoint=(waypoints[k+1]-waypoints[k])/(number_sampling+1)
             print("delta,wp",delta_waypoint)
@@ -152,6 +154,8 @@ class minimum_snap_corridor(minimum_snap):
                 #####
                 mtxG_sample[k*2*number_sampling+2*i,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,t)
                 mtxG_sample[k*2*number_sampling+2*i+1,k*(n_order+1):(k+1)*(n_order+1)]=-np.array(self.getCoeff(0,n_order,t))
+                
+                samples.append(delta_waypoint*(i+1)+waypoints[k])
                 
         mtxG=np.vstack((mtxG,mtxG_sample))
         mtxh=np.vstack((mtxh,mtxh_sample))
@@ -169,7 +173,7 @@ class minimum_snap_corridor(minimum_snap):
         mtxA=np.vstack((mtxA,mtxA_continue))
         mtxb=np.vstack((mtxb,mtxb_continue))
         
-        return mtxA,mtxb,mtxG,mtxh
+        return mtxA,mtxb,mtxG,mtxh,samples
 
     
     def generateTargetPos(self,control_freq_hz):
@@ -182,10 +186,15 @@ class minimum_snap_corridor(minimum_snap):
         waypointy=np.array(waypoints)[:,1]
         waypointz=np.array(waypoints)[:,2]
         #####################get constraint matrix################################
-        Amatx,bmatx,Gmatx,hmatx=self.getConstrainMtx(waypointx)
-        Amaty,bmaty,Gmaty,hmaty=self.getConstrainMtx(waypointy)
-        Amatz,bmatz,Gmatz,hmatz=self.getConstrainMtx(waypointz)
+        Amatx,bmatx,Gmatx,hmatx,samplesx=self.getConstrainMtx(waypointx)
+        Amaty,bmaty,Gmaty,hmaty,samplesy=self.getConstrainMtx(waypointy)
+        Amatz,bmatz,Gmatz,hmatz,samplesz=self.getConstrainMtx(waypointz)
         #########################get cost function####################
+        samples=np.vstack((np.vstack((np.array(samplesx),np.array(samplesy))),np.array(samplesz)))
+
+        self.samples=samples.T.tolist()
+        print(self.samples)
+        
         Q=self.getmtxQ()
         print(Q.shape)
         Q=cvxopt.matrix(Q)
@@ -264,6 +273,43 @@ if __name__ == "__main__":
    
     for wp in range(0,len(TARGET_POS)-20,20):
         p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    
+    
+    corridor=0.7*2
+    meshScale = [corridor/5, corridor/5, corridor/5]
+    visualShapeId = p.createVisualShape(shapeType=p.GEOM_MESH,
+                                    fileName="cube.obj",
+                                    rgbaColor=[1, 1, 1, 0.5],
+                                    specularColor=[0.4, .4, 0],
+                                    meshScale=meshScale)
+
+    ###########################add around waypoints#################################
+    segment=len(waypoints)-1
+    
+    for k in range(0,segment-1):#index number
+        p.createMultiBody(baseMass=0,
+                            baseInertialFramePosition=[0, 0, 0],
+                            baseVisualShapeIndex=visualShapeId,
+                            basePosition=waypoints[k+1],
+                            useMaximalCoordinates=True)
+        
+    corridor=0.7*2
+    meshScale = [corridor, corridor, corridor]
+    visualShapeId = p.createVisualShape(shapeType=p.GEOM_MESH,
+                                    fileName="cube.obj",
+                                    rgbaColor=[1, 1, 1, 0.5],
+                                    specularColor=[0.4, .4, 0],
+                                    meshScale=meshScale)
+    
+    samples=list(mini_corridor.samples)
+    
+    print(samples)
+    for k in range(0,len(samples)):#index number
+        p.createMultiBody(baseMass=0,
+                            baseInertialFramePosition=[0, 0, 0],
+                            baseVisualShapeIndex=visualShapeId,
+                            basePosition=samples[k],
+                            useMaximalCoordinates=True)
     
     while 1:
         p.stepSimulation()
