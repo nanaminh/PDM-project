@@ -14,15 +14,17 @@ import math
 #from scipy.optimize import minimize, LinearConstraint
 from scipy.linalg import block_diag
 import cvxopt
-from smooth_trajectory_original import getConstrainMtx
+#from smooth_trajectory_original import getConstrainMtx
 import smooth_trajectory_original
-class minimum_snap:
+
+class minimum_snap(smooth_trajectory_original.smooth_trajectory):
     def __init__(self,waypoints):
         """
         Args:
             waypoints (list): a list of 3D positions
         """
-        self.waypoints=waypoints
+        super().__init__(waypoints)
+        #self.waypoints=waypoints
     
     def setTime(self):
         """
@@ -32,13 +34,7 @@ class minimum_snap:
         Returns:
             T(list): accumulated time
         """
-        length=[]
-        waypoints=np.array(self.waypoints)
-        for index in range(len(waypoints)-1):
-            length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
-            
-        T=1.5*np.array(length) #1.5 param is hard coded
-        S=np.cumsum(T)
+        T,S=super().setTime()
         return T,S
     
     def getCoeff(self,k,n_order,ts):
@@ -51,14 +47,7 @@ class minimum_snap:
         Returns:
             list: dim(1,n_order+1)
         """
-        coeff=[0]*(n_order+1)
-        if k==0:
-            for i in range(0,n_order+1):
-                coeff[i]=ts**i
-        else:
-            for i in range(k,n_order+1):#order number
-                coeff[i]=np.math.factorial(i)/np.math.factorial(i-k)*ts**(i-k)
-        
+        coeff=super().getCoeff(k,n_order,ts)
         return coeff
     ###################WRONG COST FUNCTION MATRIX######################################3
     # def getmtxQ(self):
@@ -281,10 +270,6 @@ class minimum_snap:
                 
         target=np.array([[midpointx[i],midpointy[i],midpointz[i]] for i in range(0,len(midpointx))])
         num=len(target)
-            
-        
-        
-        
         
         return target,num
     
@@ -315,9 +300,15 @@ if __name__ == "__main__":
     # for wp in range(0,len(target)-10,10):
     #     p.addUserDebugLine(target[wp], target[wp+10], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
     #########################MORE CONSTRAINTS VISUALIZATION############################################################
-    target,num=smooth_trajectory_original.generateTargetPos(waypoint,control_freq_hz=40)
+    smooth=smooth_trajectory_original.smooth_trajectory(waypoint)
+    target,num=smooth.generateTargetPos(control_freq_hz=40)
+    
     for wp in range(0,len(target)-1):
         p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=1)
+
+
+
+
 
 
 

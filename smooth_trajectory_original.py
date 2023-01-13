@@ -12,169 +12,182 @@ import pybullet_data as pd
 import pybullet as p
 import math
 
-def getCoeff(k,n_order,ts):
-    """
-    Args:
-        k (int): the order of derivative
-        n_order (int): order of polynomial
-        ts (0~1): time
+class smooth_trajectory():
+    """a basic class to genrate smooth trajectory
 
-    Returns:
-        list: dim(1,n_order+1)
     """
-    coeff=[0]*(n_order+1)
-    if k==0:
-        for i in range(0,n_order+1):
-            coeff[i]=ts**i
-    else:
-        for i in range(k,n_order+1):#order number
-            coeff[i]=np.math.factorial(i)/np.math.factorial(i-k)*ts**(i-k)
-    
-    return coeff
-
-def getConstrainMtx(waypoints,n_order,derivative=7):
-    if len(waypoints)<2:
-        raise ValueError("The waypoint number should not be less than 2!!")
-    start_pos=waypoints[:-1]
-    goal_pos=waypoints[1:]
-    segment=len(start_pos)
-    """
-    return the constraint matrix, for single coordinate
-    Args:
-        start_pos (list): start point of each sgment dim(1,n)
-        goal_pos (list): goal point of each sgment dim(1,n)
-        n_order (int): order of polynomial
-
-    Returns:
-        np.array: the constraint matrix
-    """
-    # if segment!=segment:
-    #     raise ValueError("The dimension of input start and goal list not same")
-   
-    
-    mtxA=np.zeros((segment*(n_order+1),segment*(n_order+1)))
-    mtxb=np.zeros(segment*(n_order+1))
-    #########################for Amtx####################################
-    #1. waypoints constraint
-    #p i (S i−1 ) = w i−1 and p i (S i ) = w i for all i = 1, . . . , n (2*len(segment) constraints)
-    for k in range(0,segment):#index number
-        mtxA[k,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,0)
-        mtxA[k+segment,k*(n_order+1):(k+1)*(n_order+1)]=getCoeff(0,n_order,1)
+    def  __init__(self,waypoints) -> None:
+        self.waypoints=waypoints
         
-    #2.for start and goal, the derivative 1,2,3=0
-    #p 1 (S 0 ) - p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
-    for k in range(1,4):#derivative 1,2,3
-        # print(np.shape(mtxA[2*segment+k,0:7]))
-        # print(np.shape(mtxA[2*segment+3+k,-(n_order+1):]))
-        # print(np.shape(getCoeff(n_order,k,0)))
-        # print(np.shape(getCoeff(n_order,k,1)))
-        mtxA[2*segment+k-1,0:n_order+1] = getCoeff(k,n_order,0)
-        mtxA[2*segment+3+k-1,-(n_order+1):] = getCoeff(k,n_order,1)
+    def getCoeff(self,k,n_order,ts):
+        """
+        Args:
+            k (int): the order of derivative
+            n_order (int): order of polynomial
+            ts (0~1): time
+
+        Returns:
+            list: dim(1,n_order+1)
+        """
+        coeff=[0]*(n_order+1)
+        if k==0:
+            for i in range(0,n_order+1):
+                coeff[i]=ts**i
+        else:
+            for i in range(k,n_order+1):#order number
+                coeff[i]=np.math.factorial(i)/np.math.factorial(i-k)*ts**(i-k)
         
-    #3. continuity
-    #p i (S i ) - p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
-    for n in range(2,segment+1):
-        for k in range(1,derivative):############original (1,7)1-6
-            # print("n",n)
-            # print("k",k)
-            #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
-            mtxA[2*segment+6+(n-2)*(derivative-1)+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = getCoeff(k,n_order,1)#error:bad operator - for list
-            mtxA[2*segment+6+(n-2)*(derivative-1)+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(getCoeff(k,n_order,0))
-            #print("coefficient",-np.array(getCoeff(k,n_order,0)))
-    ############################for Bmtx########################################
-    mtxb = np.zeros((1,(n_order+1)*segment))
-    for i in range(0,segment):
-        mtxb[0,i] = start_pos[i]
-        mtxb[0,i+(segment)] = goal_pos[i]
+        return coeff
 
-    
-    #print(np.shape(mtxA),np.shape(mtxb))
-    return mtxA,mtxb
-
-def setTime(waypoints):
-    """
-    Args:
-        waypoints (list): a list of 3D positions
-
-    Returns:
-        T(list): accumulated time
-    """
-    length=[]
-    waypoints=np.array(waypoints)
-    for index in range(len(waypoints)-1):
-        length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
-        
-    T=1.5*np.array(length) #3 param is hard coded
-    S=np.cumsum(T)
-    return T,S
-
-def generateTargetPos(waypoints,control_freq_hz):
-    """a function which wraps all functions together
-
-    Args:
-        waypoints (list): dim(nx3),3d waypoints
-        control_freq_hz (int): 
-
-    Returns:
-        target position(list): dim(3,)
-        num:number of points 
-    """
-    target=[]
-    num=0
-    segment=len(waypoints)-1
-    
-    waypointx=np.array(waypoints)[:,0]
-    waypointy=np.array(waypoints)[:,1]
-    waypointz=np.array(waypoints)[:,2]
-    
-    mtxAx,mtxbx=getConstrainMtx(waypointx,7)
-    param_x=np.linalg.inv(mtxAx)@mtxbx.T
-    mtxAy,mtxby=getConstrainMtx(waypointy,7)
-    param_y=np.linalg.inv(mtxAy)@mtxby.T
-    mtxAz,mtxbz=getConstrainMtx(waypointz,7)
-    param_z=np.linalg.inv(mtxAz)@mtxbz.T
-    
-
-    midpointx=[]
-    midpointy=[]
-    midpointz=[]
-    
-    T,S=setTime(waypoints)
-    #S.insert(0,0)#head insert
-    S=np.insert(S,0,0)
-    print(T,S)
-    
-    delta_t=1/control_freq_hz
-    for i in range(0,segment):
-        for t in np.arange(S[i],S[i+1]+delta_t,delta_t):
-            time=(t-S[i])/T[i]#rescale to 0-1
-            #print(time)
-            midpointx.append(float(getCoeff(0,7,time)@param_x[i*8:(i+1)*8]))
-            midpointy.append(float(getCoeff(0,7,time)@param_y[i*8:(i+1)*8]))
-            midpointz.append(float(getCoeff(0,7,time)@param_z[i*8:(i+1)*8]))
+    def getConstrainMtx(self,waypoints,n_order,derivative=7):
+        """
+        return the constraint matrix, for single coordinate
+        Args:
+            waypoints: of 1 dim
+            start_pos (list): start point of each sgment dim(1,n)
+            goal_pos (list): goal point of each sgment dim(1,n)
+            n_order (int): order of polynomial
             
-    target=np.array([[midpointx[i],midpointy[i],midpointz[i]] for i in range(0,len(midpointx))])
-    num=len(target)
-    # PERIOD=t_ttl
-    # NUM_WP = int(np.ceil(control_freq_hz*PERIOD))
-    # #print("sub traj",NUM_WP)
-    # TARGET_POS = np.zeros((NUM_WP,3))    
+
+        Returns:
+            np.array: the constraint matrix
+        """
+
+        if len(waypoints)<2:
+            raise ValueError("The waypoint number should not be less than 2!!")
+        start_pos=waypoints[:-1]
+        goal_pos=waypoints[1:]
+        segment=len(start_pos)
+
+        # if segment!=segment:
+        #     raise ValueError("The dimension of input start and goal list not same")
     
-#     waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
-    # for wp in range(0,len(waypoints)-1):
-    #     p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-    
-    
-    
-    return target,num
-    
+        print("integer",segment)
+        mtxA=np.zeros((segment*(n_order+1),segment*(n_order+1)))
+        mtxb=np.zeros(segment*(n_order+1))
+        #########################for Amtx####################################
+        #1. waypoints constraint
+        #p i (S i−1 ) = w i−1 and p i (S i ) = w i for all i = 1, . . . , n (2*len(segment) constraints)
+        for k in range(0,segment):#index number
+            mtxA[k,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,0)
+            mtxA[k+segment,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,1)
+            
+        #2.for start and goal, the derivative 1,2,3=0
+        #p 1 (S 0 ) - p (k)n (S n ) = 0 for all k = 1, . . . , 3 (6 constraints)
+        for k in range(1,4):#derivative 1,2,3
+            # print(np.shape(mtxA[2*segment+k,0:7]))
+            # print(np.shape(mtxA[2*segment+3+k,-(n_order+1):]))
+            # print(np.shape(getCoeff(n_order,k,0)))
+            # print(np.shape(getCoeff(n_order,k,1)))
+            mtxA[2*segment+k-1,0:n_order+1] = self.getCoeff(k,n_order,0)
+            mtxA[2*segment+3+k-1,-(n_order+1):] = self.getCoeff(k,n_order,1)
+            
+        #3. continuity
+        #p i (S i ) - p i+1 (S i ) = 0 for all k = 1, . . . , 6 (6*len(segment) − 6 constraints)
+        for n in range(2,segment+1):
+            for k in range(1,derivative):############original (1,7)1-6
+                # print("n",n)
+                # print("k",k)
+                #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
+                mtxA[2*segment+6+(n-2)*(derivative-1)+k-1, (n-2)*(n_order+1):((n-1)*(n_order+1))] = self.getCoeff(k,n_order,1)#error:bad operator - for list
+                mtxA[2*segment+6+(n-2)*(derivative-1)+k-1, (n-1)*(n_order+1):(n*(n_order+1))]=-np.array(self.getCoeff(k,n_order,0))
+                #print("coefficient",-np.array(getCoeff(k,n_order,0)))
+        ############################for Bmtx########################################
+        mtxb = np.zeros((1,(n_order+1)*segment))
+        for i in range(0,segment):
+            mtxb[0,i] = start_pos[i]
+            mtxb[0,i+(segment)] = goal_pos[i]
+
+        
+        #print(np.shape(mtxA),np.shape(mtxb))
+        return mtxA,mtxb
+
+    def setTime(self):
+        """
+        Args:
+            waypoints (list): a list of 3D positions
+
+        Returns:
+            T(list): accumulated time
+        """
+        length=[]
+        waypoints=np.array(self.waypoints)
+        for index in range(len(waypoints)-1):
+            length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
+            
+        T=1.5*np.array(length) #3 param is hard coded
+        S=np.cumsum(T)
+        return T,S
+
+    def generateTargetPos(self,control_freq_hz):
+        """a function which wraps all functions together
+
+        Args:
+            waypoints (list): dim(nx3),3d waypoints
+            control_freq_hz (int): 
+
+        Returns:
+            target position(list): dim(3,)
+            num:number of points 
+        """
+        target=[]
+        num=0
+        segment=len(self.waypoints)-1
+        waypoints=np.array(self.waypoints)
+        
+        waypointx=np.array(waypoints)[:,0]
+        waypointy=np.array(waypoints)[:,1]
+        waypointz=np.array(waypoints)[:,2]
+        
+        mtxAx,mtxbx=self.getConstrainMtx(waypointx,7)
+        param_x=np.linalg.inv(mtxAx)@mtxbx.T
+        mtxAy,mtxby=self.getConstrainMtx(waypointy,7)
+        param_y=np.linalg.inv(mtxAy)@mtxby.T
+        mtxAz,mtxbz=self.getConstrainMtx(waypointz,7)
+        param_z=np.linalg.inv(mtxAz)@mtxbz.T
+        
+
+        midpointx=[]
+        midpointy=[]
+        midpointz=[]
+        
+        T,S=self.setTime()
+        #S.insert(0,0)#head insert
+        S=np.insert(S,0,0)
+        print(T,S)
+        
+        delta_t=1/control_freq_hz
+        for i in range(0,segment):
+            for t in np.arange(S[i],S[i+1]+delta_t,delta_t):
+                time=(t-S[i])/T[i]#rescale to 0-1
+                #print(time)
+                midpointx.append(float(self.getCoeff(0,7,time)@param_x[i*8:(i+1)*8]))
+                midpointy.append(float(self.getCoeff(0,7,time)@param_y[i*8:(i+1)*8]))
+                midpointz.append(float(self.getCoeff(0,7,time)@param_z[i*8:(i+1)*8]))
+                
+        target=np.array([[midpointx[i],midpointy[i],midpointz[i]] for i in range(0,len(midpointx))])
+        num=len(target)
+        # PERIOD=t_ttl
+        # NUM_WP = int(np.ceil(control_freq_hz*PERIOD))
+        # #print("sub traj",NUM_WP)
+        # TARGET_POS = np.zeros((NUM_WP,3))    
+        
+    #     waypoints=[[midpointx[i],midpointy[i],1] for i in range(0,len(midpointx))]
+        # for wp in range(0,len(waypoints)-1):
+        #     p.addUserDebugLine(waypoints[wp], waypoints[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        
+        
+        
+        return target,num
+        
 
 if __name__ == "__main__":
      ########################################################################
     
     waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
     # print(setTime(waypoints))
-    target,num=generateTargetPos(waypoint,control_freq_hz=48)
+    smooth=smooth_trajectory(waypoint)
+    target,num=smooth.generateTargetPos(control_freq_hz=48)
     print(num)
     
     
