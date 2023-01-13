@@ -260,16 +260,24 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     p.loadURDF("plane.urdf")
-    waypoints=[[0,2,2],[2,2,2],[2,-2,2],[0,-2,2]]
+    #waypoints=[[0,2,2],[2,2,2],[2,-2,2],[0,-2,2]]
+    waypoints=[[0,0,0],[-1,-1,1],[1,2,1.5],[3,1,2],[1,-1,2.5]]
     smooth=smooth_trajectory(waypoints)
     minimum=minimum_snap(waypoints)
     mini_corridor=minimum_snap_corridor(waypoints)
     #target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
     TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz=40)
     #mini_corridor.sampling()
-    p.addUserDebugLine([0,2,2], [2,2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    # p.addUserDebugLine([0,2,2], [2,2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    # p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    # p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+   
+    p.addUserDebugLine([0,0,0], [-1,-1,1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([-1,-1,1], [1,2,1.5], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([1,2,1.5], [3,1,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([3,1,2], [1,-1,2.5], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+   
+   
    
     for wp in range(0,len(TARGET_POS)-20,20):
         p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
