@@ -14,6 +14,7 @@ import math
 #from scipy.optimize import minimize, LinearConstraint
 from scipy.linalg import block_diag
 import cvxopt
+from smooth_trajectory_original import getConstrainMtx
 
 class minimum_snap:
     def __init__(self,waypoints):
@@ -59,7 +60,7 @@ class minimum_snap:
                 coeff[i]=np.math.factorial(i)/np.math.factorial(i-k)*ts**(i-k)
         
         return coeff
-    ###################WRONG COST FUNCTION######################################3
+    ###################WRONG COST FUNCTION MATRIX######################################3
     # def getmtxQ(self):
     #     T,S=self.setTime()
     #     S=np.insert(S,0,0)
@@ -88,6 +89,7 @@ class minimum_snap:
         Q_prev=[]
         n_seg=len(self.waypoints)-1
         T,_=self.setTime()
+        #T=np.ones((len(T)))
         print("t",T)
         for k in range(0,n_seg):
             Q_k = np.zeros((n_order + 1, n_order + 1))
@@ -217,28 +219,48 @@ class minimum_snap:
 if __name__ == "__main__":
      ########################################################################
     
-   # waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
-    waypoint=[[4,0,0],[8,0,0],[12,0,0]]
+    waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
+    #waypoint=[[4,0,0],[8,0,0],[12,0,0]]
     # print(setTime(waypoints))
     
     waypointx=np.array(waypoint)[:,0]
+    waypointy=np.array(waypoint)[:,1]
+    waypointz=np.array(waypoint)[:,2]
     mini=minimum_snap(waypoint)
-    Q=mini.getmtxQ()
-    print(Q.shape)
+########################################################################
    # print(Q)
     # x=np.zeros((1,32))
     # print(mini.costFunc(x))
-    Amat,bmat=mini.getConstrainMtx(waypointx)
-    print(Amat.shape)
-    print(bmat.shape)
-    print(bmat)
+    Amatx,bmatx=mini.getConstrainMtx(waypointx)
+    Amaty,bmaty=mini.getConstrainMtx(waypointy)
+    Amatz,bmatz=mini.getConstrainMtx(waypointz)
+    #######################################################
+#     Amat,bmat=getConstrainMtx(waypointx,n_order=7,derivative=4)
+#     bmat=bmat.T
+    
+# #     Traceback (most recent call last):
+# #   File "minimum_snap.py", line 253, in <module>
+# #     sol=cvxopt.solvers.qp(Q,q, A=A, b=b)
+# #   File "/home/danningzhao/anaconda3/envs/drones/lib/python3.8/site-packages/cvxopt/coneprog.py", line 4485, in qp
+# #     return coneqp(P, q, G, h, None, A,  b, initvals, kktsolver = kktsolver, options = options)
+# #   File "/home/danningzhao/anaconda3/envs/drones/lib/python3.8/site-packages/cvxopt/coneprog.py", line 2013, in coneqp
+# #     raise ValueError("Rank(A) < p or Rank([P; A; G]) < n")
+# # ValueError: Rank(A) < p or Rank([P; A; G]) < n
+    ###################################################################
+    print(Amatx.shape)
+    print(bmatx.shape)
+    print(bmatx)
+    
+    
+    
     Q=mini.getmtxQ()
     print(Q.shape)
+    
     # print(Q)
     Q=cvxopt.matrix(Q)
-    A=cvxopt.matrix(Amat)
-    b=cvxopt.matrix(bmat)
-    q=cvxopt.matrix(np.zeros((np.shape(Amat)[1],1)))
+    A=cvxopt.matrix(Amaty)
+    b=cvxopt.matrix(bmaty)
+    q=cvxopt.matrix(np.zeros((np.shape(Amaty)[1],1)))
 
 
     sol=cvxopt.solvers.qp(Q,q, A=A, b=b)
