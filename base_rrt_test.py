@@ -34,6 +34,7 @@ from base_rrt import RRT
 from  bang_bang import tj_from_multilines
 from minimum_snap import minimum_snap
 from smooth_trajectory_original import smooth_trajectory
+from minimum_snap_corridor import minimum_snap_corridor
 ####
 
 
@@ -179,7 +180,14 @@ def run(
         
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
 
-    
+    ###########################################################################################
+    mini_corridor=minimum_snap_corridor(np.array(rrt.waypoint))
+    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz)
+    step=5
+    for wp in range(0,len(TARGET_POS)-step,step):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
+        
+    wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
     
     
     for i in range(index_continue, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ, total time? AGGR_PHY_STEPS time step
