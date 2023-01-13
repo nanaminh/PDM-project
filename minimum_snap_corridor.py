@@ -279,7 +279,7 @@ if __name__ == "__main__":
     meshScale = [corridor/5, corridor/5, corridor/5]
     visualShapeId = p.createVisualShape(shapeType=p.GEOM_MESH,
                                     fileName="cube.obj",
-                                    rgbaColor=[1, 1, 1, 0.5],
+                                    rgbaColor=[0, 0, 1, 0.5],
                                     specularColor=[0.4, .4, 0],
                                     meshScale=meshScale)
 
