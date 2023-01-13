@@ -53,8 +53,19 @@ class minimum_snap_corridor(minimum_snap):
         """
         cost=super().costFunc()
         return cost
+    def sampling(self,number):
+        """sample among each time segment
+        return np.array dim()
+        """
+        T,_=self.setTime()
+        
+        samples=np.array([[time/(number+1)*(i+1) for i in range(0,number)]for time in T])
+        print("T",T)
+        print(samples)
+        # print(samples.shape)
+        return samples
     
-    def getConstrainMtx(self,waypoints,n_order=7):
+    def getConstrainMtx(self,waypoints,n_order=7,number_sampling=4,corridor=0.7):
         """
         return the constraint matrix, for single coordinate
         Args:
@@ -113,7 +124,7 @@ class minimum_snap_corridor(minimum_snap):
         
         ##INEQUALITY CONTSRAINTS ON MIDDLE WAYPOINTS
         #for each middle waypoint:
-        corridor=0.5#hard coded
+        #corridor=0.2#hard coded
         mtxG_middle = np.zeros((2*(segment-1), n_all_poly))
         mtxh_middle = np.zeros((2*(segment-1), 1))
         for k in range(0,segment-1):#index number
@@ -121,15 +132,29 @@ class minimum_snap_corridor(minimum_snap):
             mtxh_middle[k+segment-1] = -(waypoints[k+1]-corridor)
             mtxG_middle[k,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,T[k])
             mtxG_middle[k+segment-1,k*(n_order+1):(k+1)*(n_order+1)]=-np.array(self.getCoeff(0,n_order,T[k]))
-        #     print(waypoints[k+1])
-        #     print("time",T[k])
-        # #print(T)
-        # print(mtxA_middle)
-        # print(mtxb_middle)
+
         mtxG=mtxG_middle
         mtxh=mtxh_middle
-        # mtxG=np.vstack((mtxG,mtxG_middle))
-        # mtxh=np.vstack((mtxh,mtxh_middle))
+        
+        ################more sampling points################################
+        #################2 sampling point in each segment###########################
+
+        time=self.sampling(number=number_sampling)
+        mtxG_sample = np.zeros((2*number_sampling*segment, n_all_poly))
+        mtxh_sample = np.zeros((2*number_sampling*segment, 1))
+        for k in range(0,segment):#index number
+            delta_waypoint=(waypoints[k+1]-waypoints[k])/(number_sampling+1)
+            print("delta,wp",delta_waypoint)
+            for i, t in enumerate(time[k]):
+                print("wp at",i," ",t,"",delta_waypoint*(i+1)+waypoints[k])
+                mtxh_sample[k*2*number_sampling+2*i] = delta_waypoint*(i+1)+waypoints[k]+corridor
+                mtxh_sample[k*2*number_sampling+2*i+1] = -(delta_waypoint*(i+1)+waypoints[k]-corridor)
+                #####
+                mtxG_sample[k*2*number_sampling+2*i,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,t)
+                mtxG_sample[k*2*number_sampling+2*i+1,k*(n_order+1):(k+1)*(n_order+1)]=-np.array(self.getCoeff(0,n_order,t))
+                
+        mtxG=np.vstack((mtxG,mtxG_sample))
+        mtxh=np.vstack((mtxh,mtxh_sample))
         
         
 
@@ -137,23 +162,13 @@ class minimum_snap_corridor(minimum_snap):
         d_order=4
         mtxA_continue = np.zeros((d_order*(segment-1), n_all_poly))
         mtxb_continue = np.zeros((d_order*(segment-1), 1))
-        # print(mtxA_continue.shape)
-        # print(mtxb_continue.shape)
         for n in range(1,segment):
             for k in range(0,d_order):
-                # print("n",n)
-                # print("k",k)
-                #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
-                #print(mtxA_continue[(n-1)*4+k, (n-1)*(n_order+1):(n*(n_order+1))] )
                 mtxA_continue[(n-1)*d_order+k, (n-1)*(n_order+1):(n*(n_order+1))] = self.getCoeff(k,n_order,T[n-1])
                 mtxA_continue[(n-1)*d_order+k, n*(n_order+1):((n+1)*(n_order+1))]=-np.array(self.getCoeff(k,n_order,0))
-                # print("time",n,T[n-1])
-        # print(mtxA_continue)
-        # print(mtxb_continue)
         mtxA=np.vstack((mtxA,mtxA_continue))
         mtxb=np.vstack((mtxb,mtxb_continue))
         
-        # print(np.shape(mtxA),np.shape(mtxb))
         return mtxA,mtxb,mtxG,mtxh
 
     
@@ -242,6 +257,7 @@ if __name__ == "__main__":
     mini_corridor=minimum_snap_corridor(waypoints)
     #target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
     TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz=40)
+    #mini_corridor.sampling()
     p.addUserDebugLine([0,2,2], [2,2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
     p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
     p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
