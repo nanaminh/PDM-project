@@ -73,7 +73,9 @@ def tj_from_multilines(start_pos,end_pos,control_freq_hz):
 if __name__ == "__main__":
     # rrt=basic_rrt([0,0,0],[1,1,1])
     # print(rrt.tree)
-    # print(rrt.index)
+    # print(rrt.index) while 1:
+        if not rrt.goal_found:  # if the goal haven't been found
+            rrt.step()
     # #print(rrt_node.__doc__)
     # start=[0,0,0]
     # goal=[4,.4,33]

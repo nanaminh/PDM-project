@@ -6,7 +6,7 @@ import pybullet as p
 import math
 
 import cvxopt
-#from smooth_trajectory_original import getConstrainMtx
+from smooth_trajectory_original import smooth_trajectory
 from minimum_snap import minimum_snap
 
 class minimum_snap_corridor(minimum_snap):
@@ -58,22 +58,196 @@ class minimum_snap_corridor(minimum_snap):
         """
         return the constraint matrix, for single coordinate
         Args:
-        
+            start_pos (list): start point of each sgment dim(1,n)
+            goal_pos (list): goal point of each sgment dim(1,n)
             n_order (int): order of polynomial
 
         Returns:
             np.array: the constraint matrix
         """
+        #waypoints=self.waypoints
+        T,S=self.setTime()
+        print("t",T)
+        S=np.insert(S,0,0)
+        if len(waypoints)<2:
+            raise ValueError("The waypoint number should not be less than 2!!")
+        start_pos=waypoints[:-1]
+        goal_pos=waypoints[1:]
+        segment=len(start_pos)
+        n_all_poly=(n_order+1)*segment
+
+        #########################for Amtx####################################
+        #1.for start and goal, the derivative0, 1,2,3=0
         mtxA=[]
         mtxb=[]
-        return mtxA,mtxb
+        mtxG=[]
+        mtxh=[]
+        
+        mtxA_start = np.zeros((4, n_all_poly))
+        mtxb_start = np.zeros((4, 1))
+        for k in range(0,4):#derivative 0,1,2,3
+            mtxA_start[k,0:n_order+1] = self.getCoeff(k,n_order,0)
+        mtxb_start[0]=start_pos[0]
+        mtxA_end = np.zeros((4, n_all_poly))
+        mtxb_end = np.zeros((4, 1))
+        
+        for k in range(0,4):#derivative 0,1,2,3
+            mtxA_end[k,-(n_order+1):] = self.getCoeff(k,n_order,T[-1])
+        mtxb_end[0]=goal_pos[-1]
+        mtxA=np.vstack((mtxA_start,mtxA_end))
+        mtxb=np.vstack((mtxb_start,mtxb_end))
+        
+        # #3.EQUALITY position constrains in all middle waypoints
+        # mtxA_middle = np.zeros((segment-1, n_all_poly))
+        # mtxb_middle = np.zeros((segment-1, 1))
+        # for k in range(0,segment-1):#index number
+        #     mtxb_middle[k] = waypoints[k+1]
+        #     mtxA_middle[k,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,T[k])
+        # #     print(waypoints[k+1])
+        # #     print("time",T[k])
+        # # #print(T)
+        # # print(mtxA_middle)
+        # # print(mtxb_middle)
+        # mtxA=np.vstack((mtxA,mtxA_middle))
+        # mtxb=np.vstack((mtxb,mtxb_middle))
+        
+        ##INEQUALITY CONTSRAINTS ON MIDDLE WAYPOINTS
+        #for each middle waypoint:
+        corridor=0.5#hard coded
+        mtxG_middle = np.zeros((2*(segment-1), n_all_poly))
+        mtxh_middle = np.zeros((2*(segment-1), 1))
+        for k in range(0,segment-1):#index number
+            mtxh_middle[k] = waypoints[k+1]+corridor
+            mtxh_middle[k+segment-1] = -(waypoints[k+1]-corridor)
+            mtxG_middle[k,k*(n_order+1):(k+1)*(n_order+1)]=self.getCoeff(0,n_order,T[k])
+            mtxG_middle[k+segment-1,k*(n_order+1):(k+1)*(n_order+1)]=-np.array(self.getCoeff(0,n_order,T[k]))
+        #     print(waypoints[k+1])
+        #     print("time",T[k])
+        # #print(T)
+        # print(mtxA_middle)
+        # print(mtxb_middle)
+        mtxG=mtxG_middle
+        mtxh=mtxh_middle
+        # mtxG=np.vstack((mtxG,mtxG_middle))
+        # mtxh=np.vstack((mtxh,mtxh_middle))
+        
+        
+
+        #4.continuity constraints
+        d_order=4
+        mtxA_continue = np.zeros((d_order*(segment-1), n_all_poly))
+        mtxb_continue = np.zeros((d_order*(segment-1), 1))
+        # print(mtxA_continue.shape)
+        # print(mtxb_continue.shape)
+        for n in range(1,segment):
+            for k in range(0,d_order):
+                # print("n",n)
+                # print("k",k)
+                #mtxA[2*segment+6+(n-2)*6+k, (n-2)*(n_order+1)+1:(n*(n_order+1))] = [getCoeff(k,n_order,1),-np.array(getCoeff(k,n_order,0))]#error:bad operator - for list
+                #print(mtxA_continue[(n-1)*4+k, (n-1)*(n_order+1):(n*(n_order+1))] )
+                mtxA_continue[(n-1)*d_order+k, (n-1)*(n_order+1):(n*(n_order+1))] = self.getCoeff(k,n_order,T[n-1])
+                mtxA_continue[(n-1)*d_order+k, n*(n_order+1):((n+1)*(n_order+1))]=-np.array(self.getCoeff(k,n_order,0))
+                # print("time",n,T[n-1])
+        # print(mtxA_continue)
+        # print(mtxb_continue)
+        mtxA=np.vstack((mtxA,mtxA_continue))
+        mtxb=np.vstack((mtxb,mtxb_continue))
+        
+        # print(np.shape(mtxA),np.shape(mtxb))
+        return mtxA,mtxb,mtxG,mtxh
+
     
     def generateTargetPos(self,control_freq_hz):
         waypoints=np.array(self.waypoints)
         target=[]
         num=0
         segment=len(waypoints)-1
+        ################get waypoint of different dimension#####################
+        waypointx=np.array(waypoints)[:,0]
+        waypointy=np.array(waypoints)[:,1]
+        waypointz=np.array(waypoints)[:,2]
+        #####################get constraint matrix################################
+        Amatx,bmatx,Gmatx,hmatx=self.getConstrainMtx(waypointx)
+        Amaty,bmaty,Gmaty,hmaty=self.getConstrainMtx(waypointy)
+        Amatz,bmatz,Gmatz,hmatz=self.getConstrainMtx(waypointz)
+        #########################get cost function####################
+        Q=self.getmtxQ()
+        print(Q.shape)
+        Q=cvxopt.matrix(Q)
+        ###dimx
+        Ax=cvxopt.matrix(Amatx)
+        bx=cvxopt.matrix(bmatx)
+        q=cvxopt.matrix(np.zeros((np.shape(Amatx)[1],1)))
+        Gx=cvxopt.matrix(Gmatx)
+        hx=cvxopt.matrix(hmatx)
+        solx=cvxopt.solvers.qp(Q,q, Gx,hx,Ax, bx)
+        param_x=np.array(solx["x"])
+        #print(paramx)
+        #rint(paramx.shape)
+       # print(np.array(paramx))
+        ###dimy
+        Ay=cvxopt.matrix(Amaty)
+        by=cvxopt.matrix(bmaty)
+        Gy=cvxopt.matrix(Gmaty)
+        hy=cvxopt.matrix(hmaty)
+        q=cvxopt.matrix(np.zeros((np.shape(Amaty)[1],1)))
+        soly=cvxopt.solvers.qp(Q,q, Gy,hy,A=Ay, b=by)
+        param_y=np.array(soly["x"])
+        #print(paramy)
+        ###dimz
+        Az=cvxopt.matrix(Amatz)
+        bz=cvxopt.matrix(bmatz)
+        q=cvxopt.matrix(np.zeros((np.shape(Amatz)[1],1)))
+        Gz=cvxopt.matrix(Gmatz)
+        hz=cvxopt.matrix(hmatz)
+        solz=cvxopt.solvers.qp(Q,q, Gz,hz,A=Az, b=bz)
+        param_z=np.array(solz["x"])
+        #print(paramz)
         
+        midpointx=[]
+        midpointy=[]
+        midpointz=[]
         
+        T,S=self.setTime()
+        #S.insert(0,0)#head insert
+        S=np.insert(S,0,0)
+        #print(T,S)
+        
+        delta_t=1/control_freq_hz
+        for i in range(0,segment):
+            for t in np.arange(0,T[i]+delta_t,delta_t):
+                #time=(t-S[i])/T[i]#rescale to 0-1
+                time=t
+                #print(time)
+                midpointx.append(float(self.getCoeff(0,7,time)@param_x[i*8:(i+1)*8]))
+                midpointy.append(float(self.getCoeff(0,7,time)@param_y[i*8:(i+1)*8]))
+                midpointz.append(float(self.getCoeff(0,7,time)@param_z[i*8:(i+1)*8]))
+                
+        target=np.array([[midpointx[i],midpointy[i],midpointz[i]] for i in range(0,len(midpointx))])
+        num=len(target)
         
         return target,num
+    
+    
+if __name__ == "__main__":
+    ########################################################################
+    p.connect(p.GUI)
+    p.setAdditionalSearchPath(pd.getDataPath())
+    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
+    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    p.loadURDF("plane.urdf")
+    waypoints=[[0,2,2],[2,2,2],[2,-2,2],[0,-2,2]]
+    smooth=smooth_trajectory(waypoints)
+    minimum=minimum_snap(waypoints)
+    mini_corridor=minimum_snap_corridor(waypoints)
+    #target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
+    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz=40)
+    p.addUserDebugLine([0,2,2], [2,2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+   
+    for wp in range(0,len(TARGET_POS)-20,20):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    
+    while 1:
+        p.stepSimulation()

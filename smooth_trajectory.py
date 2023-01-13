@@ -104,7 +104,8 @@ def getConstrainMtx(waypoints,n_order, dim):
             #print(2*segment+6+ 6*(n-1)+k)
     ############################for Bmtx########################################
     #This part is moved above to marge two for loop!!
-
+<<<<<<< HEAD
+    
     print("constraint shape",np.shape(mtxA),np.shape(mtxb))
 # =======
 
