@@ -15,7 +15,7 @@ import math
 from scipy.linalg import block_diag
 import cvxopt
 from smooth_trajectory_original import getConstrainMtx
-
+import smooth_trajectory_original
 class minimum_snap:
     def __init__(self,waypoints):
         """
@@ -37,7 +37,7 @@ class minimum_snap:
         for index in range(len(waypoints)-1):
             length.append(math.sqrt(sum((waypoints[index+1,:]-waypoints[index,:])**2)))
             
-        T=1.5*np.array(length) #3 param is hard coded
+        T=1.5*np.array(length) #1.5 param is hard coded
         S=np.cumsum(T)
         return T,S
     
@@ -96,15 +96,21 @@ class minimum_snap:
             for i in range(4,n_order+1):
                 for j in range(4,n_order+1):
                     Q_k[i,j] = np.math.factorial(i)/np.math.factorial(i-4)*np.math.factorial(j)/np.math.factorial(j-4)/(i+j-n_order)*T[k]**(i+j-n_order)
-            ############TO PREVENT DIMENSION TROUBLE###############
+            ############TO PREVENT CONCATENATION DIMENSION TROUBLE###############
             if Q_prev!=[]:
                 Q_prev = block_diag(Q_prev, Q_k)
             else:
                 Q_prev=Q_k
-        
+            # minimum_snap.py:100: DeprecationWarning: elementwise comparison failed; this will raise an error in the future.
+            # if Q_prev!=[]:
+            
+            
+            
+            
         Q=Q_prev
         return Q
     
+    #########################################################
     def costFunc(self,x):
         """cost function of minimum snap xtQx
 
@@ -116,6 +122,8 @@ class minimum_snap:
         coeff=np.reshape(np.array(x),(dimension,1))
         cost=coeff.T@Q@coeff
         return cost
+
+    
     
     def getConstrainMtx(self,waypoints,n_order=7):
         """
@@ -211,30 +219,116 @@ class minimum_snap:
         return mtxA,mtxb
 
     
-    
-    
-    def generateTargetPos(waypoints,control_freq_hz):
-        return 0
+    def generateTargetPos(self,control_freq_hz):
+        waypoints=np.array(self.waypoints)
+        target=[]
+        num=0
+        segment=len(waypoints)-1
+        ################get waypoint of different dimension#####################
+        waypointx=np.array(waypoints)[:,0]
+        waypointy=np.array(waypoints)[:,1]
+        waypointz=np.array(waypoints)[:,2]
+        #####################get constraint matrix################################
+        Amatx,bmatx=self.getConstrainMtx(waypointx)
+        Amaty,bmaty=self.getConstrainMtx(waypointy)
+        Amatz,bmatz=self.getConstrainMtx(waypointz)
+        #########################get cost function####################
+        Q=self.getmtxQ()
+        print(Q.shape)
+        Q=cvxopt.matrix(Q)
+        ###dimx
+        Ax=cvxopt.matrix(Amatx)
+        bx=cvxopt.matrix(bmatx)
+        q=cvxopt.matrix(np.zeros((np.shape(Amatx)[1],1)))
+        solx=cvxopt.solvers.qp(Q,q, A=Ax, b=bx)
+        param_x=np.array(solx["x"])
+        #print(paramx)
+        #rint(paramx.shape)
+       # print(np.array(paramx))
+        ###dimy
+        Ay=cvxopt.matrix(Amaty)
+        by=cvxopt.matrix(bmaty)
+        q=cvxopt.matrix(np.zeros((np.shape(Amaty)[1],1)))
+        soly=cvxopt.solvers.qp(Q,q, A=Ay, b=by)
+        param_y=np.array(soly["x"])
+        #print(paramy)
+        ###dimz
+        Az=cvxopt.matrix(Amatz)
+        bz=cvxopt.matrix(bmatz)
+        q=cvxopt.matrix(np.zeros((np.shape(Amatz)[1],1)))
+        solz=cvxopt.solvers.qp(Q,q, A=Az, b=bz)
+        param_z=np.array(solz["x"])
+        #print(paramz)
+        
+        midpointx=[]
+        midpointy=[]
+        midpointz=[]
+        
+        T,S=self.setTime()
+        #S.insert(0,0)#head insert
+        S=np.insert(S,0,0)
+        #print(T,S)
+        
+        delta_t=1/control_freq_hz
+        for i in range(0,segment):
+            for t in np.arange(0,T[i]+delta_t,delta_t):
+                #time=(t-S[i])/T[i]#rescale to 0-1
+                time=t
+                #print(time)
+                midpointx.append(float(self.getCoeff(0,7,time)@param_x[i*8:(i+1)*8]))
+                midpointy.append(float(self.getCoeff(0,7,time)@param_y[i*8:(i+1)*8]))
+                midpointz.append(float(self.getCoeff(0,7,time)@param_z[i*8:(i+1)*8]))
+                
+        target=np.array([[midpointx[i],midpointy[i],midpointz[i]] for i in range(0,len(midpointx))])
+        num=len(target)
+            
+        
+        
+        
+        
+        return target,num
     
 if __name__ == "__main__":
      ########################################################################
     
     waypoint=[[0.4,0.4,1],[0.8,0.8,1],[1.2,0.4,1],[1.5,0,1],[1.8,0.4,1]]
     #waypoint=[[4,0,0],[8,0,0],[12,0,0]]
-    # print(setTime(waypoints))
-    
-    waypointx=np.array(waypoint)[:,0]
-    waypointy=np.array(waypoint)[:,1]
-    waypointz=np.array(waypoint)[:,2]
+    # print(setTime(waypoin
     mini=minimum_snap(waypoint)
-########################################################################
+    target,num=mini.generateTargetPos(40)
+#########################MINIMUM SNAP VISUALISATION###############################################
+
+    p.connect(p.GUI)
+    p.setAdditionalSearchPath(pd.getDataPath())
+    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
+    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    p.loadURDF("plane.urdf")
+    #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
+    for wp in range(0,len(waypoint)-1):
+        p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        #print(waypoint[wp])
+    ###############################visualisation need some time#############################################
+    for wp in range(0,len(target)-1):
+        p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=1)
+
+    #################################FASTER Visualisation#################################################################
+    # for wp in range(0,len(target)-10,10):
+    #     p.addUserDebugLine(target[wp], target[wp+10], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    #########################MORE CONSTRAINTS VISUALIZATION############################################################
+    target,num=smooth_trajectory_original.generateTargetPos(waypoint,control_freq_hz=40)
+    for wp in range(0,len(target)-1):
+        p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=1)
+
+
+
+
+#####################################################################
    # print(Q)
     # x=np.zeros((1,32))
     # print(mini.costFunc(x))
-    Amatx,bmatx=mini.getConstrainMtx(waypointx)
-    Amaty,bmaty=mini.getConstrainMtx(waypointy)
-    Amatz,bmatz=mini.getConstrainMtx(waypointz)
-    #######################################################
+
+    
+    ######################ERROR BECAUSE OF WRONG CONSTRAINTS#################################
 #     Amat,bmat=getConstrainMtx(waypointx,n_order=7,derivative=4)
 #     bmat=bmat.T
     
@@ -247,21 +341,22 @@ if __name__ == "__main__":
 # #     raise ValueError("Rank(A) < p or Rank([P; A; G]) < n")
 # # ValueError: Rank(A) < p or Rank([P; A; G]) < n
     ###################################################################
-    print(Amatx.shape)
-    print(bmatx.shape)
-    print(bmatx)
+    # print(Amatx.shape)
+    # print(bmatx.shape)
+    # print(bmatx)
     
     
     
-    Q=mini.getmtxQ()
-    print(Q.shape)
+    # Q=mini.getmtxQ()
+    # print(Q.shape)
     
-    # print(Q)
-    Q=cvxopt.matrix(Q)
-    A=cvxopt.matrix(Amaty)
-    b=cvxopt.matrix(bmaty)
-    q=cvxopt.matrix(np.zeros((np.shape(Amaty)[1],1)))
+    # # print(Q)
+    # Q=cvxopt.matrix(Q)
+    # A=cvxopt.matrix(Amaty)
+    # b=cvxopt.matrix(bmaty)
+    # q=cvxopt.matrix(np.zeros((np.shape(Amaty)[1],1)))
 
 
-    sol=cvxopt.solvers.qp(Q,q, A=A, b=b)
-    print(sol["x"])
+    # sol=cvxopt.solvers.qp(Q,q, A=A, b=b)
+    # print(sol["x"])
+    ####################################################################

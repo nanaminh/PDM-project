@@ -178,22 +178,22 @@ if __name__ == "__main__":
     print(num)
     
     
-    # p.connect(p.GUI)
-    # p.setAdditionalSearchPath(pd.getDataPath())
-    # # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
-    # # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    # p.loadURDF("plane.urdf")
-    # #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
-    # for wp in range(0,len(waypoint)-1):
-    #     p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-    #     #print(waypoint[wp])
-    # ###############################visualisation need some time#############################################
-    # # for wp in range(0,len(target)-1):
-    # #     p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
-    #     #print(waypoint[wp])
-    # #################################FASTER Visualisation#################################################################
-    # for wp in range(0,len(target)-10,10):
-    #     p.addUserDebugLine(target[wp], target[wp+10], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    p.connect(p.GUI)
+    p.setAdditionalSearchPath(pd.getDataPath())
+    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
+    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    p.loadURDF("plane.urdf")
+    #p.addUserDebugLine(waypoint[0],waypoint[1],lineColorRGB=[1, 0, 0],lifeTime=0, lineWidth=1)
+    for wp in range(0,len(waypoint)-1):
+        p.addUserDebugLine(waypoint[wp], waypoint[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        #print(waypoint[wp])
+    ###############################visualisation need some time#############################################
+    # for wp in range(0,len(target)-1):
+    #     p.addUserDebugLine(target[wp], target[wp+1], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        #print(waypoint[wp])
+    #################################FASTER Visualisation#################################################################
+    for wp in range(0,len(target)-10,10):
+        p.addUserDebugLine(target[wp], target[wp+10], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
     
     ########################################################################
     #list inserting test
