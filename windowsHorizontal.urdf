@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot name="windowsHorizontal">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="4.5 0.5 0.8"/>
+      </geometry>
+  	<origin rpy="0 0 0" xyz="0 0 0.4"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="4.7 0.7 0.9"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 0 0.4"/>
+    </collision>
+  </link>
+</robot>

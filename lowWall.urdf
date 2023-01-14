@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<robot name="lowWall">
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="2 0.3 1"/>
+      </geometry>
+  	<origin rpy="0 0 0" xyz="0 0 0.3"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="2.2 0.5 1.1"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 0 0.3"/>
+    </collision>
+  </link>
+</robot>
