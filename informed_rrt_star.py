@@ -250,13 +250,13 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     # p.loadURDF("plane.urdf")
 
-<<<<<<< HEAD
+
     windowsSeq = np.array([[3, 3, 0.5], [3, -3, 0.5]])
     tunnelSeq = np.array([[3, -2, 0.5], [-3, -2, 0.5]])
     lowWallSeq = np.array([[-2, -2, 0.5], [-3, 2, 0.5]])
     crawlSeq = np.array([[-2, 2, 0.5], [2, 2, 0.5]])
 
-    rrt_star = RRTStar(lowWallSeq[0],lowWallSeq[1])
+    #rrt_star = RRTStar(lowWallSeq[0],lowWallSeq[1])
     
     spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2, 1.1],[0.5, 2, 1.1]]
     # for spawnpoint in spawnpoints:
@@ -293,26 +293,21 @@ if __name__ == "__main__":
 
     
 
-=======
+#=======
     info_rrt_star = InformedRRTStar([0.5, 0.5, 0.5], [4, 4, 4])
     # info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
     # myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
 
     # spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2,
     # 1.1],[0.5, 2, 1.1]] for spawnpoint in spawnpoints: p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
->>>>>>> c25aae074260669969d38f72cd3dfd74d34a914a
+#>>>>>>> c25aae074260669969d38f72cd3dfd74d34a914a
 
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
-<<<<<<< HEAD
-    while rrt_star.index <= 4000:  # Limit in the amount of nodes.
-        rrt_star.step()
-=======
     while 1:
         while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
             info_rrt_star.step()
->>>>>>> c25aae074260669969d38f72cd3dfd74d34a914a
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")
