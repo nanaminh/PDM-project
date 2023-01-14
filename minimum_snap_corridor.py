@@ -272,22 +272,22 @@ if __name__ == "__main__":
     # p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
     # p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
    
-    p.addUserDebugLine([0,0,0], [-1,-1,1], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([-1,-1,1], [1,2,1.5], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([1,2,1.5], [3,1,2], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
-    p.addUserDebugLine([3,1,2], [1,-1,2.5], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([0,0,0], [-1,-1,1], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([-1,-1,1], [1,2,1.5], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([1,2,1.5], [3,1,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([3,1,2], [1,-1,2.5], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
    
    
    
     for wp in range(0,len(TARGET_POS)-20,20):
-        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=2)
     
     
     corridor=0.7*2
     meshScale = [corridor/5, corridor/5, corridor/5]
     visualShapeId = p.createVisualShape(shapeType=p.GEOM_MESH,
                                     fileName="cube.obj",
-                                    rgbaColor=[0, 0, 1, 0.5],
+                                    rgbaColor=[0, 0, 1, 0.3],
                                     specularColor=[0.4, .4, 0],
                                     meshScale=meshScale)
 
@@ -318,6 +318,14 @@ if __name__ == "__main__":
                             baseVisualShapeIndex=visualShapeId,
                             basePosition=samples[k],
                             useMaximalCoordinates=True)
+    
+    TARGET_POS,NUM_WP=minimum.generateTargetPos(control_freq_hz=40)
+    for wp in range(0,len(TARGET_POS)-20,20):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=2)
+        
+    TARGET_POS,NUM_WP=smooth.generateTargetPos(control_freq_hz=40)
+    for wp in range(0,len(TARGET_POS)-20,20):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
     
     while 1:
         p.stepSimulation()
