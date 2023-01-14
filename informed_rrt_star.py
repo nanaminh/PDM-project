@@ -85,9 +85,10 @@ class RRTStar:
 
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
+        margin = 2.0
         if not self.goal_found:
-            random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i] + 1) for i in
-                                        range(0, 3)])  # +1 is for a larger sample space
+            random_position = informed_sample(np.array(self.start), np.array(self.goal), np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
+            # random_position=np.array([np.random.random_sample()*(self.goal[i]-self.start[i])+1 for i in range(0,3)])#+1 is for a larger sample space
         else:
             random_position = informed_sample(np.array(self.start), np.array(self.goal),
                                               self.tree[self.goal_index].dist)
@@ -249,20 +250,56 @@ if __name__ == "__main__":
     p.setAdditionalSearchPath(pd.getDataPath())
     # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    p.loadURDF("plane.urdf")
+    # p.loadURDF("plane.urdf")
 
-    rrt_star = RRTStar([0, 0.1, 0.1], [0, 4, 0.1])
-    #myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
+    windowsSeq = np.array([[3, 3, 0.5], [3, -3, 0.5]])
+    tunnelSeq = np.array([[3, -2, 0.5], [-3, -2, 0.5]])
+    lowWallSeq = np.array([[-2, -2, 0.5], [-3, 2, 0.5]])
+    crawlSeq = np.array([[-2, 2, 0.5], [2, 2, 0.5]])
 
+    rrt_star = RRTStar(lowWallSeq[0],lowWallSeq[1])
+    
     spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2, 1.1],[0.5, 2, 1.1]]
-    for spawnpoint in spawnpoints:
-        p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
+    # for spawnpoint in spawnpoints:
+        # p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
+    
+    
+    rotation = [0, 0, 0.7071, 0.7071]
+    
+    # WINDOWS
+    windowsCenter = np.array([3,0,0])
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter,np.array([0, 0, -0.1])))
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter,np.array([0, 0, 1.6])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([0, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([-1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([-2, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([2, 0, 0.1])))
+    # TUNNEL
+    tunnelCenter = np.array([0,-2,0.1])
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter,np.array([0, -0.4, -0.1])))
+    p.loadURDF("roof.urdf", np.add(tunnelCenter,np.array([0, 0, -0.1])))
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter,np.array([0, 0.4, -0.1])))
+    # LOW WALL
+    p.loadURDF("lowWall.urdf", [-2,0,0.1])
+    # CRAWL
+    crawlCenter = np.array([0,3,-1])
+    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter,np.array([0, 0, 1.5])), rotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, -2, 0])), rotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, 2, 0])), rotation)
+
+    # Floor collider
+    p.loadURDF("floorCollider.urdf", [0,0,-0.5])
+    
+
+    
+
 
     
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
-    while rrt_star.index <= 1000:  # Limit in the amount of nodes.
+    while rrt_star.index <= 4000:  # Limit in the amount of nodes.
         rrt_star.step()
     ######################DEBUG TEST1 END#######################################################
 

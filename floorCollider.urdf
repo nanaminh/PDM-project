@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<robot name="Floor">
+	<material name="ground">
+    <color rgba="0.35 0.7 0.2 1"/>
+  </material>
+  
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="20 20 1"/>
+      </geometry>
+  	<origin rpy="0 0 0" xyz="0 0 0"/>
+  	<material name="ground"/>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="20 20 1.1"/>
+      </geometry>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+    </collision>
+  </link>
+</robot>
