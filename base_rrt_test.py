@@ -30,8 +30,11 @@ from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ####
-from base_rrt import basic_rrt
+from base_rrt import RRT
 from  bang_bang import tj_from_multilines
+from minimum_snap import minimum_snap
+from smooth_trajectory_original import smooth_trajectory
+from minimum_snap_corridor import minimum_snap_corridor
 ####
 
 
@@ -139,7 +142,7 @@ def run(
     #pre_pos = [0, 0, 0]
     
     ##initialize rrt
-    rrt=basic_rrt([0,0,0],[4,4,4])
+    rrt=RRT([0, 0, 0], [3, 3, 3])
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ
@@ -158,6 +161,32 @@ def run(
     START_POS=rrt.start_pos   
     END_POS=rrt.end_pos   
     TARGET_POS,NUM_WP=tj_from_multilines(START_POS,END_POS,control_freq_hz)
+    wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
+    
+    ##########################################################################################
+    smooth=smooth_trajectory(np.array(rrt.waypoint))
+    TARGET_POS,NUM_WP=smooth.generateTargetPos(control_freq_hz)
+    step=5
+    for wp in range(0,len(TARGET_POS)-step,step):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=2)
+    
+    ##############################################################################################
+    
+    minimum=minimum_snap(np.array(rrt.waypoint))
+    TARGET_POS,NUM_WP=minimum.generateTargetPos(control_freq_hz)
+    step=5
+    for wp in range(0,len(TARGET_POS)-step,step):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
+        
+    wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
+
+    ###########################################################################################
+    mini_corridor=minimum_snap_corridor(np.array(rrt.waypoint))
+    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz)
+    step=5
+    for wp in range(0,len(TARGET_POS)-step,step):
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
+        
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
     
     

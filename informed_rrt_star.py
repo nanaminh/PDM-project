@@ -4,17 +4,15 @@
 # Author: Abel van Elburg
 # email: a.t.g.vanelburg@student.tudelft.nl
 #######
-import numpy as np
 import pybullet as p
 import pybullet_data as pd
-import time
 from informed_sampling import *
 
 
 class Node:
     """
     a structure contains information of RRT tree nodes
-    coordiantes x,y,z
+    coordinates x,y,z
     index of the node's parent
     """
 
@@ -25,7 +23,7 @@ class Node:
 
 
 def visualisation(start_pos, goal_pos):
-    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
 
 
 def collision_check(start_pos, goal_pos):
@@ -38,7 +36,7 @@ def collision_check(start_pos, goal_pos):
     return collision
 
 
-class RRTStar:
+class InformedRRTStar:
     """
     RRT*
 
@@ -155,7 +153,7 @@ class RRTStar:
                     node.index_parent = self.index
                     node.dist = new_dist
                     p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
-                                       lineWidth=1)
+                                       lineWidth=0.5)
 
             # 8. Check whether the goal is reached, and if it is an improvement
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
@@ -207,7 +205,7 @@ class RRTStar:
             self.trajectory_back.append(self.tree[index])
             parent_index = self.tree[index].index_parent
             p.addUserDebugLine(list(self.tree[parent_index].position), list(self.tree[index].position),
-                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3)
+                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3.0)
             index = parent_index
 
         self.trajectory_back.append(self.tree[0])  # push the root node
@@ -252,6 +250,7 @@ if __name__ == "__main__":
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
     # p.loadURDF("plane.urdf")
 
+<<<<<<< HEAD
     windowsSeq = np.array([[3, 3, 0.5], [3, -3, 0.5]])
     tunnelSeq = np.array([[3, -2, 0.5], [-3, -2, 0.5]])
     lowWallSeq = np.array([[-2, -2, 0.5], [-3, 2, 0.5]])
@@ -294,14 +293,27 @@ if __name__ == "__main__":
 
     
 
+=======
+    info_rrt_star = InformedRRTStar([0.5, 0.5, 0.5], [4, 4, 4])
+    # info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
+    # myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
 
-    
+    # spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2,
+    # 1.1],[0.5, 2, 1.1]] for spawnpoint in spawnpoints: p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
+>>>>>>> c25aae074260669969d38f72cd3dfd74d34a914a
+
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
+<<<<<<< HEAD
     while rrt_star.index <= 4000:  # Limit in the amount of nodes.
         rrt_star.step()
+=======
+    while 1:
+        while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
+            info_rrt_star.step()
+>>>>>>> c25aae074260669969d38f72cd3dfd74d34a914a
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")
-    print("Shortest path found: ", rrt_star.tree[rrt_star.goal_index].dist)
+    print("Shortest path found: ", info_rrt_star.tree[info_rrt_star.goal_index].dist)

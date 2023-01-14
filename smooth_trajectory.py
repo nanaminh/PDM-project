@@ -104,11 +104,16 @@ def getConstrainMtx(waypoints,n_order, dim):
             #print(2*segment+6+ 6*(n-1)+k)
     ############################for Bmtx########################################
     #This part is moved above to marge two for loop!!
+<<<<<<< HEAD
+    
+    print("constraint shape",np.shape(mtxA),np.shape(mtxb))
+# =======
 
-    print("A and b", np.shape(mtxA),np.shape(mtxb))
-    #print(np.shape(mtxA),np.shape(mtxb))
+#     print("A and b", np.shape(mtxA),np.shape(mtxb))
+#     #print(np.shape(mtxA),np.shape(mtxb))
 
-    return mtxA,mtxb
+# >>>>>>> b3ee3d9297a0b4bc122d12429411ff98482c1770
+#     return mtxA,mtxb
 
 def setTime(waypoints):
     """
@@ -195,11 +200,23 @@ if __name__ == "__main__":
 
     #print(getConstrainMtx(waypoints= waypoint, n_order =7, dim='x'))
     A, b = getConstrainMtx(waypoints= waypoint, n_order =7, dim='x')
-    #print(A[0:2, :])
-    #print(b[0:2, :])
 
-    print(np.linalg.det(A))
-    alpha = np.linalg.solve(A, b) #This does not work because A is a singular matrix
+    print(np.shape(A))
+    A_new=A[[not np.all(A[i] == 0) for i in range(A.shape[0])], :]
+    print(np.shape(A_new))
+    b_new=b[:np.shape(A_new)[0]]
+    print(np.shape(b_new))
+    # print(A[0:2, :])
+    # print(b[0:2, :])
+    # print(np.linalg.det(A))
+    # alpha = np.linalg.solve(A[0:2, 0:], b[0:2, :]) #This does not work because A is a singular matrix
+# =======
+#     #print(A[0:2, :])
+#     #print(b[0:2, :])
+
+#     print(np.linalg.det(A))
+#     alpha = np.linalg.solve(A, b) #This does not work because A is a singular matrix
+# >>>>>>> b3ee3d9297a0b4bc122d12429411ff98482c1770
 
     
 

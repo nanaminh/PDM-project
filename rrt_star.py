@@ -7,13 +7,12 @@
 import numpy as np
 import pybullet as p
 import pybullet_data as pd
-import time
 
 
 class Node:
     """
     a structure contains information of RRT tree nodes
-    coordiantes x,y,z
+    coordinates x,y,z
     index of the node's parent
     """
 
@@ -249,8 +248,9 @@ if __name__ == "__main__":
     # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
 
     ######################DEBUG TEST1 stop after goal found###############################
-    while rrt_star.index <= 1000:  # Limit in the amount of nodes.
-        rrt_star.step()
+    while 1:
+        while rrt_star.index <= 1000:  # Limit in the amount of nodes.
+            rrt_star.step()
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")

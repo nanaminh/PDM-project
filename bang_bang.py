@@ -73,7 +73,9 @@ def tj_from_multilines(start_pos,end_pos,control_freq_hz):
 if __name__ == "__main__":
     # rrt=basic_rrt([0,0,0],[1,1,1])
     # print(rrt.tree)
-    # print(rrt.index)
+    # print(rrt.index) while 1:
+        if not rrt.goal_found:  # if the goal haven't been found
+            rrt.step()
     # #print(rrt_node.__doc__)
     # start=[0,0,0]
     # goal=[4,.4,33]
@@ -95,17 +97,17 @@ if __name__ == "__main__":
 
     #     p.stepSimulation()
     #######NUMPY TEST################################
-    a=np.array([1,2,3])
-    print(a*a)
-    ##################FUNCTION TEST############################
-    target_pos=tj_from_line([0,0,0],[1,1,1],4,10)
-    #print(target_pos)
+    # a=np.array([1,2,3])
+    # print(a*a)
+    # ##################FUNCTION TEST############################
+    # target_pos=tj_from_line([0,0,0],[1,1,1],4,10)
+    # #print(target_pos)
     
-    b=[[1,1,1],[1,1,1]]
-    #print(np.shape(b))
-    ###################Multipline function test#################
-    start_pos=[[0,0,0],[1,1,1],[0,2,3]]
-    end_pos=[[1,1,1],[0,2,3],[4,5,6]]
-    #print(start_pos[0])
-    target,nm=tj_from_multilines(start_pos,end_pos,24)
-    print( nm)
+    # b=[[1,1,1],[1,1,1]]
+    # #print(np.shape(b))
+    # ###################Multipline function test#################
+    # start_pos=[[0,0,0],[1,1,1],[0,2,3]]
+    # end_pos=[[1,1,1],[0,2,3],[4,5,6]]
+    # #print(start_pos[0])
+    # target,nm=tj_from_multilines(start_pos,end_pos,24)
+    # print( nm)

@@ -28,7 +28,8 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ###############################################
 from bang_bang import tj_from_multilines
-from smooth_trajectory_original import generateTargetPos
+from smooth_trajectory_original import smooth_trajectory
+from minimum_snap import minimum_snap
 ###############################################
 
 DEFAULT_DRONES = DroneModel("cf2x")
@@ -93,8 +94,11 @@ def run(
     
     
     waypoints=[[0,0,0],[-1,-1,1],[1,2,1.5],[3,1,2],[1,-1,2.5]]
+    smooth=smooth_trajectory(waypoints)
+    minimum=minimum_snap(waypoints)
     #target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
-    TARGET_POS,NUM_WP=generateTargetPos(waypoints,control_freq_hz)
+    TARGET_POS,NUM_WP=smooth.generateTargetPos(control_freq_hz)
+    TARGET_POS2,NUM_WP2=minimum.generateTargetPos(control_freq_hz)
     #####################################################################################
     print("TARGET_POS SHAPE", np.shape(TARGET_POS))#TARGET_POS SHAPE (480, 3)  (NUM_WP,3)
     print("target",TARGET_POS)
@@ -170,6 +174,9 @@ def run(
     #visualisation
     for wp in range(0,len(TARGET_POS)-20,20):
         p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+20], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    ######MINIMUM SNAP########
+    for wp in range(0,len(TARGET_POS2)-20,20):
+        p.addUserDebugLine(TARGET_POS2[wp], TARGET_POS2[wp+20], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=1)
     ###########################################################################
     
     
