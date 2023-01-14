@@ -83,20 +83,13 @@ class InformedRRTStar:
 
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
-        margin = 2.0
+        
         if not self.goal_found:
+            # a random point is sampled in an ellipsoid with preset margin around the start and goal 
+            margin = 2.0
             random_position = informed_sample(np.array(self.start), np.array(self.goal), np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
-            # random_position=np.array([np.random.random_sample()*(self.goal[i]-self.start[i])+1 for i in range(0,3)])#+1 is for a larger sample space
         else:
-            random_position = informed_sample(np.array(self.start), np.array(self.goal),
-                                              self.tree[self.goal_index].dist)
-            # p.addUserDebugLine(self.start, random_position, lineColorRGB=[1, 0, 1], lifeTime=100, lineWidth=3)
-            # print("random_position=", random_position)
-            # for i in range(800):
-            #     random_position = informed_sample(np.array(self.start), np.array(self.goal),
-            #                                       self.tree[self.goal_index].dist)
-            #     p.addUserDebugLine([3, 3, 3], random_position, lineColorRGB=[1, 0, 1], lifeTime=100, lineWidth=3)
-
+            random_position = informed_sample(np.array(self.start), np.array(self.goal), self.tree[self.goal_index].dist)
         # 2. Find the nearest node in the tree
         min_distance = 100000
         min_index = 0
@@ -236,34 +229,15 @@ class InformedRRTStar:
 
 
 if __name__ == "__main__":
-    # rrt=basic_rrt([0,0,0],[1,1,1])
-    # print(rrt.tree)
-    # print(rrt.index)
-    # #print(rrt_node.__doc__)
-    # start=[0,0,0]
-    # goal=[4,.4,33]
-    # print(goal-start)
-
     p.connect(p.GUI)
     p.setAdditionalSearchPath(pd.getDataPath())
     # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
+    
+    
     # p.loadURDF("plane.urdf")
-
-
-    windowsSeq = np.array([[3, 3, 0.5], [3, -3, 0.5]])
-    tunnelSeq = np.array([[3, -2, 0.5], [-3, -2, 0.5]])
-    lowWallSeq = np.array([[-2, -2, 0.5], [-3, 2, 0.5]])
-    crawlSeq = np.array([[-2, 2, 0.5], [2, 2, 0.5]])
-
-    #rrt_star = RRTStar(lowWallSeq[0],lowWallSeq[1])
     
-    spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2, 1.1],[0.5, 2, 1.1]]
-    # for spawnpoint in spawnpoints:
-        # p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
-    
-    
-    rotation = [0, 0, 0.7071, 0.7071]
+    quarterRotation = [0, 0, 0.7071, 0.7071]
     
     # WINDOWS
     windowsCenter = np.array([3,0,0])
@@ -283,27 +257,22 @@ if __name__ == "__main__":
     p.loadURDF("lowWall.urdf", [-2,0,0.1])
     # CRAWL
     crawlCenter = np.array([0,3,-1])
-    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter,np.array([0, 0, 1.5])), rotation)
-    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, -2, 0])), rotation)
-    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, 2, 0])), rotation)
+    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter,np.array([0, 0, 1.5])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, -2, 0])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, 2, 0])), quarterRotation)
 
     # Floor collider
     p.loadURDF("floorCollider.urdf", [0,0,-0.5])
     
-
     
+    windowsSeq = np.array([[3, 3, 0.5], [-3, -3, 0.5]])
+    tunnelSeq = np.array([[3, -2, 0.5], [-3, -2, 0.5]])
+    lowWallSeq = np.array([[-2, -2, 0.5], [-3, 2, 0.5]])
+    crawlSeq = np.array([[-2, 2, 0.5], [2, 2, 0.5]])
+    
+    info_rrt_star = InformedRRTStar(lowWallSeq[0], lowWallSeq[1])   
 
-#=======
-    info_rrt_star = InformedRRTStar([0.5, 0.5, 0.5], [4, 4, 4])
-    # info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
-    # myId = p.loadURDF("Assem1(URDF).SLDASM.urdf", [2,2,2])
-
-    # spawnpoints = [[0, 2, 0.1],[-0.5, 2, 0.1],[0.5, 2, 0.1], [-0.5, 2, 0.6],[0.5, 2, 0.6],[0, 2, 1.1],[-0.5, 2,
-    # 1.1],[0.5, 2, 1.1]] for spawnpoint in spawnpoints: p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
-#>>>>>>> c25aae074260669969d38f72cd3dfd74d34a914a
-
-    # rrt = basic_rrt([0.5, 0.5, 0.5], [4, 4, 0.5])
-
+	
     ######################DEBUG TEST1 stop after goal found###############################
     while 1:
         while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
