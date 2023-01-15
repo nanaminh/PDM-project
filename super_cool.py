@@ -1,12 +1,26 @@
 #######
-# RO47005 Planning and decision-making 22/23
+# RO47005 Planning and decision making 22/23
 # Group:10
+# Aurthor: Danning Zhao
+# email: D.ZHAO-3@student.tudelft.nl
 # reference to example/fly.py
 #######
+
+import os
 import time
 import argparse
+from datetime import datetime
+import pdb
+import math
+import random
 import numpy as np
 import pybullet as p
+import pybullet_data as pd
+import matplotlib.pyplot as plt
+import sys
+
+sys.path.append('../gym-pybullet-drones/')
+
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.envs.VisionAviary import VisionAviary
@@ -14,11 +28,12 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.control.SimplePIDControl import SimplePIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
+
+####
 from informed_rrt_star import InformedRRTStar
 from bang_bang import tj_from_multilines
-import sys
 
-sys.path.append('../gym-pybullet-drones/')
+####
 
 
 DEFAULT_DRONES = DroneModel("cf2x")
@@ -30,7 +45,7 @@ DEFAULT_RECORD_VISION = False
 DEFAULT_PLOT = True
 DEFAULT_USER_DEBUG_GUI = False
 DEFAULT_AGGREGATE = True
-DEFAULT_OBSTACLES = True
+DEFAULT_OBSTACLES = False
 DEFAULT_SIMULATION_FREQ_HZ = 240  # ?
 DEFAULT_CONTROL_FREQ_HZ = 48  # ?
 DEFAULT_DURATION_SEC = 100
@@ -59,11 +74,13 @@ def run(
     H = .1
     H_STEP = .05
     R = .3
-    INIT_XYZS = np.array(
-        [[R * np.cos((i / 6) * 2 * np.pi + np.pi / 2), R * np.sin((i / 6) * 2 * np.pi + np.pi / 2) - R, H + i * H_STEP]
-         for i in range(num_drones)])  # nested lists
+    # INIT_XYZS = np.array(
+    #     [[R * np.cos((i / 6) * 2 * np.pi + np.pi / 2), R * np.sin((i / 6) * 2 * np.pi + np.pi / 2) - R, H + i * H_STEP]
+    #      for i in range(num_drones)])  # nested lists
     # print("INIT_XYZS shape",np.shape(INIT_XYZS))#(3,3)
     INIT_RPYS = np.array([[0, 0, i * (np.pi / 2) / num_drones] for i in range(num_drones)])
+    INIT_XYZS = np.array([[-2, -2, 0.5] for i in range(num_drones)])
+    # INIT_RPYS = np.array([[-2, -2, 0.5] for i in range(num_drones)])
     # print("INIT_RPYS shape",np.shape(INIT_RPYS))#(3,3)
     AGGR_PHY_STEPS = int(simulation_freq_hz / control_freq_hz) if aggregate else 1  #
     print("AGGR_PHY_STEPS", AGGR_PHY_STEPS)
@@ -78,7 +95,7 @@ def run(
                            neighbourhood_radius=10,
                            freq=simulation_freq_hz,
                            aggregate_phy_steps=AGGR_PHY_STEPS,
-                           gui=gui,
+                           gui=p.connect(p.GUI),
                            record=record_video,
                            obstacles=obstacles
                            )
@@ -91,7 +108,7 @@ def run(
                          neighbourhood_radius=10,
                          freq=simulation_freq_hz,  # 240
                          aggregate_phy_steps=AGGR_PHY_STEPS,  # 5
-                         gui=gui,
+                         gui=p.connect(p.GUI),
                          record=record_video,
                          obstacles=obstacles,
                          user_debug_gui=user_debug_gui
@@ -120,33 +137,86 @@ def run(
     # control_freq_hz 48
 
     action = {str(i): np.array([0, 0, 0, 0]) for i in range(num_drones)}  # DICTIONARY
-    START = time.time()
-    print("START Simulation time", START)
 
     # pre_pos = [0, 0, 0]
 
-    ##initialize rrt
-    info_rrt_star = InformedRRTStar([0, 0.1, 0.1], [0, 4, 0.1])
+    # Initialize scene
+    # p.connect(p.GUI)
+    p.setAdditionalSearchPath(pd.getDataPath())
 
-    spawnpoints = [[0, 2, 0.1], [-0.5, 2, 0.1], [0.5, 2, 0.1], [-0.5, 2, 0.6], [0.5, 2, 0.6], [0, 2, 1.1],
-                   [-0.5, 2, 1.1], [0.5, 2, 1.1]]
-    for spawnpoint in spawnpoints:
-        p.loadURDF("Assem1(URDF).SLDASM.urdf", spawnpoint)
-    print("FINISHED")
-    print("Shortest path found: ", info_rrt_star.tree[info_rrt_star.goal_index].dist)
+    quarterRotation = [0, 0, 0.7071, 0.7071]
 
-    for i in range(0, int(duration_sec * env.SIM_FREQ), AGGR_PHY_STEPS):  ##duration_sec*env.SIM_FREQ
-        #### Make it rain rubber ducks #############################
-        # if i/env.SIM_FREQ>5 and i%10==0 and i/env.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [0+random.gauss(0, 0.3),-0.5+random.gauss(0, 0.3),3], p.getQuaternionFromEuler([random.randint(0,360),random.randint(0,360),random.randint(0,360)]), physicsClientId=PYB_CLIENT)
+    # WINDOWS
+    windowsCenter = np.array([3, 0, 0])
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter, np.array([0, 0, -0.1])))
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter, np.array([0, 0, 1.6])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([0, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([-1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([-2, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([2, 0, 0.1])))
+    # TUNNEL
+    tunnelCenter = np.array([0, -2, 0.1])
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter, np.array([0, -0.4, -0.1])))
+    p.loadURDF("roof.urdf", np.add(tunnelCenter, np.array([0, 0, -0.1])))
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter, np.array([0, 0.4, -0.1])))
+    # LOW WALL
+    p.loadURDF("lowWall.urdf", [-2, 0, 0.1])
+    # CRAWL
+    crawlCenter = np.array([0, 3, -1])
+    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter, np.array([0, 0, 1.5])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter, np.array([0, -2, 0])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter, np.array([0, 2, 0])), quarterRotation)
 
-        #### Step the simulation ###################################
+    # Floor collider
+    p.loadURDF("floorCollider.urdf", [0, 0, -0.5])
 
+    lowWallSeq = np.array([[-2, -2, 0.5], [-2, 2, 0.5]])
+    crawlSeq = np.array([[-2, 2, 0.5], [3, 2, 0.5]])
+    windowsSeq = np.array([[3, 2, 0.5], [3, -2, 0.5]])
+    tunnelSeq = np.array([[3, -2, 0.5], [-2, -2, 0.5]])
+
+    shortest_distance = 0
+    shortest_path = 0
+    info_rrt_star = InformedRRTStar(lowWallSeq[0], lowWallSeq[1])
+
+    START = time.time()
+    print("START Simulation time", START)
+
+    for i in range(0, int(duration_sec * env.SIM_FREQ), AGGR_PHY_STEPS):  # duration_sec*env.SIM_FREQ
+        # Find the paths
         obs, reward, done, info = env.step(action)  # update of pybullet
-        if info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
+        while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
             info_rrt_star.step()
-        else:
-            index_continue = i
-            break
+        shortest_path += info_rrt_star.shortest_path
+        shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+        prev = info_rrt_star
+
+        info_rrt_star = InformedRRTStar(crawlSeq[0], crawlSeq[1], first_path=False, previous=prev)
+        while info_rrt_star.index <= 1000:
+            info_rrt_star.step()
+        shortest_path += info_rrt_star.shortest_path
+        shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+        prev = info_rrt_star
+
+        info_rrt_star = InformedRRTStar(windowsSeq[0], windowsSeq[1], first_path=False, previous=prev)
+        while info_rrt_star.index <= 1000:
+            info_rrt_star.step()
+        shortest_path += info_rrt_star.shortest_path
+        shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+        prev = info_rrt_star
+
+        info_rrt_star = InformedRRTStar(tunnelSeq[0], tunnelSeq[1], first_path=False, previous=prev)
+        while info_rrt_star.index <= 1000:
+            info_rrt_star.step()
+        shortest_path += info_rrt_star.shortest_path
+        shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+        index_continue = i
+        break
+
+    print("FINISHED")
+    print("Shortest distance possible: ", shortest_distance)
+    print("Shortest path found: ", shortest_path)
 
     START_POS = info_rrt_star.start_pos
     END_POS = info_rrt_star.end_pos

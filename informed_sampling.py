@@ -3,7 +3,7 @@ import numpy as np
 
 def sampling_sphere():
     sample = [2 * np.random.random_sample() - 1, 2 * np.random.random_sample() - 1, 2 * np.random.random_sample() - 1]
-    if (sample[0] ** 2 + sample[1] ** 2 + sample[2] ** 2 < 1.0):
+    if sample[0] ** 2 + sample[1] ** 2 + sample[2] ** 2 < 1.0:
         return sample
     return sampling_sphere()
 
@@ -29,7 +29,6 @@ def informed_sample(x_start, x_goal, c_best):
 
     # step2unified sample in ball radius=1
     sample = sampling_sphere()
-    new_node = sample
 
     r1 = c_best / 2
     r2 = np.sqrt(c_best ** 2 - c_min ** 2) / 2
