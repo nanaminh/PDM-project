@@ -99,6 +99,7 @@ class RRT:
 
         # 3.check collision free
         collision = collision_check(node_nearest.position, random_position)
+        print(collision)
         if not collision:
             # 4.push the new node into the tree
             normalized = diff_coordinate / euler_distance * self.delta

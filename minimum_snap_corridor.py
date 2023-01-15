@@ -66,7 +66,7 @@ class minimum_snap_corridor(minimum_snap):
         # print(samples.shape)
         return samples
     
-    def getConstrainMtx(self,waypoints,n_order=7,number_sampling=4,corridor=0.7):
+    def getConstrainMtx(self,waypoints,number_sampling,corridor,n_order=7):
         """
         return the constraint matrix, for single coordinate
         Args:
@@ -176,7 +176,7 @@ class minimum_snap_corridor(minimum_snap):
         return mtxA,mtxb,mtxG,mtxh,samples
 
     
-    def generateTargetPos(self,control_freq_hz):
+    def generateTargetPos(self,control_freq_hz,number_sampling=4,corridor=0.7):
         waypoints=np.array(self.waypoints)
         target=[]
         num=0
@@ -186,9 +186,9 @@ class minimum_snap_corridor(minimum_snap):
         waypointy=np.array(waypoints)[:,1]
         waypointz=np.array(waypoints)[:,2]
         #####################get constraint matrix################################
-        Amatx,bmatx,Gmatx,hmatx,samplesx=self.getConstrainMtx(waypointx)
-        Amaty,bmaty,Gmaty,hmaty,samplesy=self.getConstrainMtx(waypointy)
-        Amatz,bmatz,Gmatz,hmatz,samplesz=self.getConstrainMtx(waypointz)
+        Amatx,bmatx,Gmatx,hmatx,samplesx=self.getConstrainMtx(waypointx,number_sampling,corridor)
+        Amaty,bmaty,Gmaty,hmaty,samplesy=self.getConstrainMtx(waypointy,number_sampling,corridor)
+        Amatz,bmatz,Gmatz,hmatz,samplesz=self.getConstrainMtx(waypointz,number_sampling,corridor)
         #########################get cost function####################
         samples=np.vstack((np.vstack((np.array(samplesx),np.array(samplesy))),np.array(samplesz)))
 
@@ -266,11 +266,11 @@ if __name__ == "__main__":
     minimum=minimum_snap(waypoints)
     mini_corridor=minimum_snap_corridor(waypoints)
     #target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
-    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz=40)
+    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz=40,number_sampling=2,corridor=0.5)
     #mini_corridor.sampling()
-    # p.addUserDebugLine([0,2,2], [2,2,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
-    # p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
-    # p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([0,2,2], [2,2,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([2,2,2], [2,-2,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
+    p.addUserDebugLine([2,-2,2], [0,-2,2], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
    
     # p.addUserDebugLine([0,0,0], [-1,-1,1], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)
     # p.addUserDebugLine([-1,-1,1], [1,2,1.5], lineColorRGB=[0, 0, 0], lifeTime=0, lineWidth=3)

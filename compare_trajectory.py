@@ -115,37 +115,49 @@ def run(
 
     #### Obtain the PyBullet Client ID from the environment ####
     PYB_CLIENT = env.getPyBulletClient()#no use for later
-    
-    p.loadURDF("windowsVertical.urdf",
-                   [1, 2, 0]
-                   )
-    p.loadURDF("windowsVertical.urdf",
-                   [2, 1, 0]
-                   )
-    p.loadURDF("windowsVertical.urdf",
-                   [1, -2, 0]
-                   )
-    p.loadURDF("windowsVertical.urdf",
-                   [1, 2, 0]
-                   )
-    p.loadURDF("windowsVertical.urdf",
-                   [2, 2, 0]
-                   )
-    p.loadURDF("windowsVertical.urdf",
-                [3, 2, 0]
-                )
-    p.loadURDF("windowsVertical.urdf",
-                [2, 3, 0]
-                )
-    p.loadURDF("roof.urdf",
-                [1, -2, 0]
-                )
+    ##############################load obstacles###################################
+    # p.loadURDF("windowsVertical.urdf",
+    #                [1, 2, 0]
+    #                )
+    # p.loadURDF("windowsVertical.urdf",
+    #                [2, 1, 0]
+    #                )
+    # p.loadURDF("windowsVertical.urdf",
+    #                [1, -2, 0]
+    #                )
+    # p.loadURDF("windowsVertical.urdf",
+    #                [1, 2, 0]
+    #                )
+    # p.loadURDF("windowsVertical.urdf",
+    #                [2, 2, 0]
+    #                )
+    # p.loadURDF("windowsVertical.urdf",
+    #             [3, 2, 0]
+    #             )
+    # p.loadURDF("windowsVertical.urdf",
+    #             [2, 3, 0]
+    #             )
+    # p.loadURDF("roof.urdf",
+    #             [1, -2, 0]
+    #             )
     
     # p.loadURDF("floorCollider.urdf",
     #                [1, -2, 0]
     #                )
-
-
+    # WINDOWS
+    # windowsCenter = np.array([1,1,0])
+    # p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter,np.array([0, 0, -0.1])))
+    # p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter,np.array([0, 0, 1.6])))
+    # p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([0, 0, 0.1])))
+    # p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([-1, 0, 0.1])))
+    # p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([1, 0, 0.1])))
+    # p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([-2, 0, 0.1])))
+    # p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([2, 0, 0.1])))
+    # # TUNNEL
+    # tunnelCenter = np.array([0,-2,0.1])
+    # p.loadURDF("lowWall.urdf", np.add(tunnelCenter,np.array([0, -0.4, -0.1])))
+    # p.loadURDF("roof.urdf", np.add(tunnelCenter,np.array([0, 0, -0.1])))
+    # p.loadURDF("lowWall.urdf", np.add(tunnelCenter,np.array([0, 0.4, -0.1])))
 
 
     #### Initialize the logger #################################
@@ -179,7 +191,7 @@ def run(
     #pre_pos = [0, 0, 0]
     
     ##initialize rrt
-    rrt=RRT([0, 0, 0], [3, 3, 2])
+    rrt=RRT([0, 0, 0], [4, 4, 0.2])
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ
@@ -219,7 +231,7 @@ def run(
 
     ###########################################################################################
     mini_corridor=minimum_snap_corridor(np.array(rrt.waypoint))
-    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz)
+    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz,number_sampling=2,corridor=0.3)
     step=5
     for wp in range(0,len(TARGET_POS)-step,step):
         p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 1, 0], lifeTime=0, lineWidth=4)
