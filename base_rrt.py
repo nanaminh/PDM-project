@@ -7,7 +7,11 @@
 import numpy as np
 import pybullet as p
 import pybullet_data as pd
+from informed_sampling import *
 
+import time
+
+start_time = time.time()
 
 class Node:
     """
@@ -24,6 +28,16 @@ class Node:
 
 def visualisation(start_pos, goal_pos):
     p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
+
+def print_results(rrt):
+    if rrt.goal_found:
+                pathLength = rrt.tree[rrt.goal_index].dist
+                # print new pathlength and ellapsed time
+                if rrt.last_path_length != pathLength:
+                    ellapsedTime = time.time() - start_time
+                    # print("after", ellapsedTime, "seconds the shortest path =", pathLength)
+                    print(ellapsedTime, ",", pathLength, "")
+                    rrt.last_path_length = pathLength    
 
 
 def collision_check(start_pos, goal_pos):
@@ -82,9 +96,10 @@ class RRT:
 
     def step(self):
         # 1.random sample
-        random_position = np.array([np.random.random_sample() * (self.goal[i]+1 - self.start[i])  for i in
-                                    range(0, 3)])  # +1 is hard coded, for a larger sample space
-        print(random_position)
+        # a random point is sampled in an ellipsoid with preset margin around the start and goal 
+        margin = 2.0
+        random_position = informed_sample(np.array(self.start), np.array(self.goal), np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
+        # print(random_position)
         # 2.find the nearest node in the tree
         min_distance = 100000
         min_index = 0
@@ -175,27 +190,81 @@ class RRT:
 
 
 if __name__ == "__main__":
-    # rrt=basic_rrt([0,0,0],[1,1,1])
-    # print(rrt.tree)
-    # print(rrt.index)
-    # #print(rrt_node.__doc__)
-    # start=[0,0,0]
-    # goal=[4,.4,33]
-    # print(goal-start)
-
     p.connect(p.GUI)
     p.setAdditionalSearchPath(pd.getDataPath())
     # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
     # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    p.loadURDF("plane.urdf")
+    
+    # p.loadURDF("plane.urdf")
 
-    rrt = RRT([0.5, 0.5, 0.5], [4, 4, 4])
+    
 
-    ######################DEBUG TEST1 stop after goal found###############################
-    while 1:
-        if not rrt.goal_found:  # if the goal haven't been found
-            rrt.step()
-            
-        # print(np.array(rrt.trajectory_back))
+    quarterRotation = [0, 0, 0.7071, 0.7071]
 
-    ######################DEBUG TEST1 END#######################################################
+    # WINDOWS
+    windowsCenter = np.array([3, 0, 0])
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter, np.array([0, 0, -0.1])))
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter, np.array([0, 0, 1.6])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([0, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([-1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([-2, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([2, 0, 0.1])))
+    # TUNNEL
+    tunnelCenter = np.array([0, -2, 0.1])
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter, np.array([0, -0.4, -0.1])))
+    p.loadURDF("roof.urdf", np.add(tunnelCenter, np.array([0, 0, -0.1])))
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter, np.array([0, 0.4, -0.1])))
+    # LOW WALL
+    p.loadURDF("lowWall.urdf", [-2, 0, 0.1])
+    # CRAWL
+    crawlCenter = np.array([0, 3, -1])
+    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter, np.array([0, 0, 1.5])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter, np.array([0, -2, 0])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter, np.array([0, 2, 0])), quarterRotation)
+
+    # Floor collider
+    p.loadURDF("floorCollider.urdf", [0, 0, -0.5])
+
+    lowWallSeq = np.array([[-2, -2, 0.5], [-2, 2, 0.5]])
+    crawlSeq = np.array([[-2, 2, 0.5], [3, 2, 0.5]])
+    windowsSeq = np.array([[3, 2, 0.5], [3, -2, 0.5]])
+    tunnelSeq = np.array([[3, -2, 0.5], [-2, -2, 0.5]])
+
+    shortest_distance = 0
+    shortest_path = 0
+
+    rrt = RRT(lowWallSeq[0], lowWallSeq[1])
+    while rrt.index <= 1000:  # Limit in the amount of nodes.
+        rrt.step()
+        print_results(rrt)
+    shortest_path += rrt.shortest_path
+    shortest_distance += np.linalg.norm(np.array(rrt.start) - np.array(rrt.goal))
+    prev = rrt
+
+    rrt = RRT(crawlSeq[0], crawlSeq[1], first_path=False, previous=prev)
+    while rrt.index <= 1000:
+        rrt.step()
+        print_results(rrt)
+    shortest_path += rrt.shortest_path
+    shortest_distance += np.linalg.norm(np.array(rrt.start) - np.array(rrt.goal))
+    prev = rrt
+
+    rrt = RRT(windowsSeq[0], windowsSeq[1], first_path=False, previous=prev)
+    while rrt.index <= 1000:
+        rrt.step()
+        print_results(rrt)
+    shortest_path += rrt.shortest_path
+    shortest_distance += np.linalg.norm(np.array(rrt.start) - np.array(rrt.goal))
+    prev = rrt
+
+    rrt = RRT(tunnelSeq[0], tunnelSeq[1], first_path=False, previous=prev)
+    while rrt.index <= 1000:
+        rrt.step()
+        print_results(rrt)
+    shortest_path += rrt.shortest_path
+    shortest_distance += np.linalg.norm(np.array(rrt.start) - np.array(rrt.goal))
+
+    print("FINISHED")
+    print("Shortest distance possible: ", shortest_distance)
+    print("Shortest path found: ", shortest_path)

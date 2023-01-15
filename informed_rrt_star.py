@@ -10,8 +10,6 @@ from informed_sampling import *
 
 import time
 
-import time
-
 start_time = time.time()
 
 class Node:
