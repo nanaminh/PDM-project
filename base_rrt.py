@@ -287,7 +287,7 @@ if __name__ == "__main__":
     shortest_path += rrt.shortest_path
     shortest_distance += np.linalg.norm(np.array(rrt.start) - np.array(rrt.goal))
 
-    print(time.time()-start_time,rrt.tree[rrt.goal_index].dist)
+    print(time.time()-start_time,",",rrt.tree[rrt.goal_index].dist)
     print("FINISHED")
     # print("Shortest distance possible: ", shortest_distance)
     # print("Shortest path found: ", shortest_path)

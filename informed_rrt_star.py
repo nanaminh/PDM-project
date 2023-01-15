@@ -41,7 +41,7 @@ def collision_check(start_pos, goal_pos):
 
 def print_results(pathfinder):
     if pathfinder.goal_found:
-        path_length = pathfinder.tree[pathfinder.goal_index].dist
+        path_length = pathfinder.shortest_path
         # print new path length and elapsed time
         if pathfinder.last_path_length != path_length:
             elapsed_time = time.time() - start_time
@@ -341,7 +341,7 @@ if __name__ == "__main__":
     shortest_path += info_rrt_star.shortest_path
     shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
 
-    print(time.time()-start_time,info_rrt_star.tree[info_rrt_star.goal_index].dist)
+    print(time.time()-start_time,",",info_rrt_star.tree[info_rrt_star.goal_index].dist)
     print("FINISHED")
     print("Shortest distance possible: ", shortest_distance)
     print("Shortest path found: ", shortest_path)
