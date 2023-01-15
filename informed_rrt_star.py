@@ -8,6 +8,8 @@ import pybullet as p
 import pybullet_data as pd
 from informed_sampling import *
 
+import time
+
 
 class Node:
     """
@@ -56,6 +58,8 @@ class InformedRRTStar:
         TO DO: visualize the start position and goal position with point
         TO DO: inverse the traceback list
         """
+        self.start_time = time.time()
+        self.last_path_length = None
         self.start = start_pos
         self.goal = goal_pos
         self.index = -1  # the index of current node, -1 means no nodes in the list
@@ -221,9 +225,9 @@ class InformedRRTStar:
         self.waypoint = waypoint
         self.start_pos = waypoint[0:-1]
         self.end_pos = waypoint[1:]
-        print(np.shape(self.waypoint))
-        print(np.shape(self.start_pos))
-        print(np.shape(self.end_pos))
+        # print(np.shape(self.waypoint))
+        # print(np.shape(self.start_pos))
+        # print(np.shape(self.end_pos))
 
     # debug test
 
@@ -270,13 +274,20 @@ if __name__ == "__main__":
     lowWallSeq = np.array([[-2, -2, 0.5], [-2, 2, 0.5]])
     crawlSeq = np.array([[-2, 2, 0.5], [3, 2, 0.5]])
     
-    info_rrt_star = InformedRRTStar(crawlSeq[0], crawlSeq[1])   
+    info_rrt_star = InformedRRTStar(windowsSeq[0], windowsSeq[1])   
 
-	
     ######################DEBUG TEST1 stop after goal found###############################
     while 1:
         while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
             info_rrt_star.step()
+            if info_rrt_star.goal_found:
+                pathLength = info_rrt_star.tree[info_rrt_star.goal_index].dist
+                # print new pathlength and ellapsed time
+                if info_rrt_star.last_path_length != pathLength:
+                    ellapsedTime = time.time() - info_rrt_star.start_time
+                    # print("after", ellapsedTime, "seconds the shortest path =", pathLength)
+                    print(ellapsedTime, ",", pathLength, "")
+                    info_rrt_star.last_path_length = pathLength
     ######################DEBUG TEST1 END#######################################################
 
     print("FINISHED")
