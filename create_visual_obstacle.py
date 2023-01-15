@@ -27,6 +27,11 @@ p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
 #disable tinyrenderer, software (CPU) renderer, we don't use it here
 p.configureDebugVisualizer(p.COV_ENABLE_TINY_RENDERER, 0)
 
+p.loadURDF("windowsVertical.urdf",
+                   [0, 2, .5],
+                   p.getQuaternionFromEuler([0,0,0])
+                   )
+
 shift = [0, 0, 0]
 meshScale = [1, 1, 1]
 #the visual shape and collision shape can be re-used by all createMultiBody instances (instancing)
