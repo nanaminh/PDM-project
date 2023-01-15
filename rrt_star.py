@@ -200,6 +200,9 @@ class RRTStar:
         for child_index in node.index_children:
             child = self.tree[child_index]
             child.dist = node.dist + np.linalg.norm(node.position - child.position)
+            if child_index == self.goal_index:
+                self.shortest_path = child.dist
+                self.backtracking()
             self.update_children(child)
 
     def push_new_node(self, node):
