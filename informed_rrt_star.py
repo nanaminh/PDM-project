@@ -265,12 +265,12 @@ if __name__ == "__main__":
     p.loadURDF("floorCollider.urdf", [0,0,-0.5])
     
     
-    windowsSeq = np.array([[3, 3, 0.5], [-3, -3, 0.5]])
-    tunnelSeq = np.array([[3, -2, 0.5], [-3, -2, 0.5]])
-    lowWallSeq = np.array([[-2, -2, 0.5], [-3, 2, 0.5]])
-    crawlSeq = np.array([[-2, 2, 0.5], [2, 2, 0.5]])
+    windowsSeq = np.array([[3, 2, 0.5], [3, -2, 0.5]])
+    tunnelSeq = np.array([[3, -2, 0.5], [-2, -2, 0.5]])
+    lowWallSeq = np.array([[-2, -2, 0.5], [-2, 2, 0.5]])
+    crawlSeq = np.array([[-2, 2, 0.5], [3, 2, 0.5]])
     
-    info_rrt_star = InformedRRTStar(lowWallSeq[0], lowWallSeq[1])   
+    info_rrt_star = InformedRRTStar(crawlSeq[0], crawlSeq[1])   
 
 	
     ######################DEBUG TEST1 stop after goal found###############################
