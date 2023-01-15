@@ -27,7 +27,7 @@ from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ###############################################
-from bang_bang import tj_from_multilines
+from bang_bang import tj_from_multiple_lines
 ###############################################
 
 DEFAULT_DRONES = DroneModel("cf2x")
@@ -103,7 +103,7 @@ def run(
     start_pos=[[0,0,0],[-1,-1,1],[1,2,1.5],[3,1,2]]
     end_pos=[[-1,-1,1],[1,2,1.5],[3,1,2],[1,-1,2.5]]
     #print(start_pos[0])
-    target,num=tj_from_multilines(start_pos,end_pos,control_freq_hz)
+    target,num=tj_from_multiple_lines(start_pos, end_pos, control_freq_hz)
     TARGET_POS=target
     NUM_WP=num
     print(np.shape(target))
