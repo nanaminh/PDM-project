@@ -21,6 +21,7 @@ class Node:
     def __init__(self, position, parent, dist=0):
         self.position = position  # coordinate (x,y,z),np.array
         self.index_parent = parent
+        self.index_children = []
         self.dist = dist  # dist to root
 
 
@@ -40,7 +41,7 @@ def collision_check(start_pos, goal_pos):
 
 def print_results(pathfinder):
     if pathfinder.goal_found:
-        path_length = pathfinder.tree[pathfinder.goal_index].dist
+        path_length = pathfinder.shortest_path
         # print new path length and elapsed time
         if pathfinder.last_path_length != path_length:
             elapsed_time = time.time() - start_time
@@ -96,6 +97,8 @@ class InformedRRTStar:
         self.root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
         self.push_new_node(self.root)  # push the root, index=0
         # visualize the start and goal position with a line
+        init_time = time.time() - start_time
+        print(init_time, ", 0")
         # print("start and goal", self.start, self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
@@ -129,7 +132,7 @@ class InformedRRTStar:
             # 4. Push new node to the tree
             # normalized = diff_coordinate / euler_distance * self.delta
             new_position = node_nearest.position + min_position
-            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
+            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)
             self.push_new_node(node_new)
 
             # 5. Search other possible parents
@@ -155,16 +158,19 @@ class InformedRRTStar:
             # node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
+            self.tree[near_index].index_children.append(self.index)
             # visualisation(list(node_near.position), list(new_position))
 
             # 7. Rewiring nodes to new node (if distance becomes shorter)
-            for i in range(near_count):
-                node = self.tree[nodes_near_list[i]]
+            for i in nodes_near_list:
+                node = self.tree[i]
                 current_dist = node.dist
                 new_dist = node_new.dist + np.linalg.norm(node.position - node_new.position)
                 if new_dist < current_dist:
                     node.index_parent = self.index
                     node.dist = new_dist
+                    self.update_children(node)
+
                     # p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
                     #                    lineWidth=1)
 
@@ -198,6 +204,15 @@ class InformedRRTStar:
                         # 9b. Trace back to start
                         self.backtracking()
         # return self.goal_found
+
+    def update_children(self, node):
+        for child_index in node.index_children:
+            child = self.tree[child_index]
+            child.dist = node.dist + np.linalg.norm(node.position - child.position)
+            if child_index == self.goal_index:
+                self.shortest_path = child.dist
+                self.backtracking()
+            self.update_children(child)
 
     def push_new_node(self, node):
         self.tree.append(node)
@@ -329,6 +344,7 @@ if __name__ == "__main__":
     shortest_path += info_rrt_star.shortest_path
     shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
 
+    print(time.time() - start_time, ",", info_rrt_star.tree[info_rrt_star.goal_index].dist)
     print("FINISHED")
     print("Shortest distance possible: ", shortest_distance)
     print("Shortest path found: ", shortest_path)

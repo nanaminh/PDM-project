@@ -1,25 +1,13 @@
 #######
-# RO47005 Planning and decision making 22/23
+# RO47005 Planning and decision-making 22/23
 # Group:10
-# Aurthor: Danning Zhao
-# email: D.ZHAO-3@student.tudelft.nl
 # reference to example/fly.py
 #######
-
-import os
 import time
 import argparse
-from datetime import datetime
-import pdb
-import math
-import random
 import numpy as np
 import pybullet as p
 import pybullet_data as pd
-import matplotlib.pyplot as plt
-import sys
-
-sys.path.append('../gym-pybullet-drones/')
 
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
@@ -28,12 +16,12 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.control.SimplePIDControl import SimplePIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-
 ####
 from informed_rrt_star import InformedRRTStar
-from bang_bang import tj_from_multilines
-
+from bang_bang import tj_from_multiple_lines
 ####
+import sys
+sys.path.append('../gym-pybullet-drones/')
 
 
 DEFAULT_DRONES = DroneModel("cf2x")
@@ -220,7 +208,7 @@ def run(
 
     START_POS = info_rrt_star.start_pos
     END_POS = info_rrt_star.end_pos
-    TARGET_POS, NUM_WP = tj_from_multilines(START_POS, END_POS, control_freq_hz)
+    TARGET_POS, NUM_WP = tj_from_multiple_lines(START_POS, END_POS, control_freq_hz)
     wp_counters = np.array([int((i * NUM_WP / 6) % NUM_WP) for i in range(num_drones)])
 
     for i in range(index_continue, int(duration_sec * env.SIM_FREQ),

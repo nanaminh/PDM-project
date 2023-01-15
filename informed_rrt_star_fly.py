@@ -15,7 +15,7 @@ from gym_pybullet_drones.control.SimplePIDControl import SimplePIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
 from informed_rrt_star import InformedRRTStar
-from bang_bang import tj_from_multilines
+from bang_bang import tj_from_multiple_lines
 import sys
 
 sys.path.append('../gym-pybullet-drones/')
@@ -150,7 +150,7 @@ def run(
 
     START_POS = info_rrt_star.start_pos
     END_POS = info_rrt_star.end_pos
-    TARGET_POS, NUM_WP = tj_from_multilines(START_POS, END_POS, control_freq_hz)
+    TARGET_POS, NUM_WP = tj_from_multiple_lines(START_POS, END_POS, control_freq_hz)
     wp_counters = np.array([int((i * NUM_WP / 6) % NUM_WP) for i in range(num_drones)])
 
     for i in range(index_continue, int(duration_sec * env.SIM_FREQ),

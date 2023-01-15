@@ -20,6 +20,7 @@ class Node:
     def __init__(self, position, parent, dist=0):
         self.position = position  # coordinate (x,y,z),np.array
         self.index_parent = parent
+        self.index_children = []
         self.dist = dist  # dist to root
 
 
@@ -62,6 +63,7 @@ class RRTStar:
         the nodes of tree are stored in an array
         in order to simplify the random sample process, set coordinates of goal_pos>start_pos>0,
         """
+        self.last_path_length = None
         self.start = start_pos
         self.goal = goal_pos
         self.index = -1  # the index of current node, -1 means no nodes in the list
@@ -93,7 +95,7 @@ class RRTStar:
         root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
         self.push_new_node(root)  # push the root, index=0
         # visualize the start and goal position with a line
-        print("start and goal", self.start, self.goal)
+        # print("start and goal", self.start, self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
     def step(self):
@@ -144,10 +146,11 @@ class RRTStar:
                             near_index = i
 
             # 6. (Re-)attach the node to the best parent
-            node_near = self.tree[near_index]
+            # node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
-            visualisation(list(node_near.position), list(new_position))
+            self.tree[near_index].index_children.append(self.index)
+            # visualisation(list(node_near.position), list(new_position))
 
             # 7. Rewiring nodes to new node (if distance becomes shorter)
             for i in range(near_count):
@@ -158,8 +161,9 @@ class RRTStar:
                 if new_dist < current_dist:
                     node.index_parent = self.index
                     node.dist = new_dist
-                    p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
-                                       lineWidth=1)
+                    self.update_children(node)
+                    # p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
+                    #                    lineWidth=1)
 
             # 8. Check whether the goal is reached, and if it is an improvement
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
@@ -191,6 +195,15 @@ class RRTStar:
                         # 9b. Trace back to start
                         self.backtracking()
         # return self.goal_found
+
+    def update_children(self, node):
+        for child_index in node.index_children:
+            child = self.tree[child_index]
+            child.dist = node.dist + np.linalg.norm(node.position - child.position)
+            if child_index == self.goal_index:
+                self.shortest_path = child.dist
+                self.backtracking()
+            self.update_children(child)
 
     def push_new_node(self, node):
         self.tree.append(node)
@@ -226,8 +239,8 @@ class RRTStar:
         # update waypoint information
         self.get_waypoints()
 
-        print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start) - np.array(self.goal)))
-        print("trajectory total length: ", self.tree[self.goal_index].dist)
+        # print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start) - np.array(self.goal)))
+        # print("trajectory total length: ", self.tree[self.goal_index].dist)
 
     def get_waypoints(self):
         """
@@ -241,9 +254,9 @@ class RRTStar:
         self.waypoint = waypoint
         self.start_pos = waypoint[0:-1]
         self.end_pos = waypoint[1:]
-        print(np.shape(self.waypoint))
-        print(np.shape(self.start_pos))
-        print(np.shape(self.end_pos))
+        # print(np.shape(self.waypoint))
+        # print(np.shape(self.start_pos))
+        # print(np.shape(self.end_pos))
 
     # debug test
 

@@ -31,7 +31,7 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ####
 from base_rrt import RRT
-from  bang_bang import tj_from_multilines
+from  bang_bang import tj_from_multiple_lines
 from minimum_snap import minimum_snap
 from smooth_trajectory_original import smooth_trajectory
 from minimum_snap_corridor import minimum_snap_corridor
@@ -160,7 +160,7 @@ def run(
      
     START_POS=rrt.start_pos   
     END_POS=rrt.end_pos   
-    TARGET_POS,NUM_WP=tj_from_multilines(START_POS,END_POS,control_freq_hz)
+    TARGET_POS,NUM_WP=tj_from_multiple_lines(START_POS, END_POS, control_freq_hz)
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
     
     ##########################################################################################
