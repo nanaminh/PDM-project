@@ -191,7 +191,7 @@ def run(
     #pre_pos = [0, 0, 0]
     
     ##initialize rrt
-    rrt=RRT([0, 0, 0], [4, 4, 0.2])
+    rrt=RRT([0, 0, 0], [4, 4, 2])
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ
@@ -211,7 +211,7 @@ def run(
     END_POS=rrt.end_pos   
     TARGET_POS,NUM_WP=tj_from_multilines(START_POS,END_POS,control_freq_hz)
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
-    
+    print("rrt",rrt.waypoint)
     ##########################################################################################
     smooth=smooth_trajectory(np.array(rrt.waypoint))
     TARGET_POS,NUM_WP=smooth.generateTargetPos(control_freq_hz)
@@ -231,8 +231,46 @@ def run(
 
     ###########################################################################################
     mini_corridor=minimum_snap_corridor(np.array(rrt.waypoint))
-    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz,number_sampling=2,corridor=0.3)
+    number_sampling=1
+    waypoints=rrt.waypoint
+    corridor=0.5
+    TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz,number_sampling=number_sampling,corridor=corridor)
     step=5
+    #########################waypoint corridor###############################
+    meshScale = [corridor/5, corridor/5, corridor/5]
+    visualShapeId = p.createVisualShape(shapeType=p.GEOM_MESH,
+                                    fileName="cube.obj",
+                                    rgbaColor=[0, 0, 1, 0.6],
+                                    specularColor=[0.4, .4, 0],
+                                    meshScale=meshScale)
+    
+    segment=len(waypoints)-1
+    
+    for k in range(0,segment-1):#index number
+        p.createMultiBody(baseMass=0,
+                            baseInertialFramePosition=[0, 0, 0],
+                            baseVisualShapeIndex=visualShapeId,
+                            basePosition=waypoints[k+1],
+                            useMaximalCoordinates=True)
+    ##########################samples corridor visualisation############################### 
+    meshScale = [corridor, corridor, corridor]
+    visualShapeId = p.createVisualShape(shapeType=p.GEOM_MESH,
+                                    fileName="cube.obj",
+                                    rgbaColor=[1, 1, 1, 0.2],
+                                    specularColor=[0.4, .4, 0],
+                                    meshScale=meshScale)
+    
+    samples=list(mini_corridor.samples)
+    
+    print(samples)
+    for k in range(0,len(samples)):#index number
+        p.createMultiBody(baseMass=0,
+                            baseInertialFramePosition=[0, 0, 0],
+                            baseVisualShapeIndex=visualShapeId,
+                            basePosition=samples[k],
+                            useMaximalCoordinates=True)     
+        
+    ##############################################################################3
     for wp in range(0,len(TARGET_POS)-step,step):
         p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 1, 0], lifeTime=0, lineWidth=4)
         

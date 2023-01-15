@@ -142,7 +142,7 @@ def run(
     #pre_pos = [0, 0, 0]
     
     ##initialize rrt
-    rrt=RRT([0, 0, 0], [3, 3, 3])
+    rrt=RRT([0, 0, 0], [5, 5, 0.5])
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ
@@ -181,7 +181,7 @@ def run(
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
 
     ###########################################################################################
-    mini_corridor=minimum_snap_corridor(np.array(rrt.waypoint))
+    mini_corridor=minimum_snap_corridor(rrt.waypoint)
     TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz)
     step=5
     for wp in range(0,len(TARGET_POS)-step,step):

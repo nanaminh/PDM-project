@@ -103,6 +103,8 @@ class RRT:
         margin = 2.0
         random_position = informed_sample(np.array(self.start), np.array(self.goal),
                                           np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
+        #random_position=np.array([np.random.random_sample()*(self.goal[i]+1-self.start[i]) for i in range(0,3)])#+1 is for a larger sample space
+        
         # print(random_position)
         # 2.find the nearest node in the tree
         min_distance = 100000
@@ -124,7 +126,10 @@ class RRT:
         if not collision:
             # 4.push the new node into the tree
             new_position = node_nearest.position + min_position
-            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
+            normalized=diff_coordinate/euler_distance*self.delta
+            new_position=node_nearest.position+normalized
+            node_new=Node(new_position,min_index)#generate node_new
+            #node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
             self.push_new_node(node_new)
             visualisation(list(node_nearest.position), list(new_position))
 
