@@ -94,7 +94,9 @@ class RRT:
         root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
         self.push_new_node(root)  # push the root, index=0
         # visualize the start and goal position with a line
-        print("start and goal", self.start, self.goal)
+        initlTime = time.time() - start_time
+        print(initlTime,", 0")
+        # print("start and goal", self.start, self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
     def step(self):
@@ -126,7 +128,7 @@ class RRT:
             new_position = node_nearest.position + min_position
             node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
             self.push_new_node(node_new)
-            visualisation(list(node_nearest.position), list(new_position))
+            # visualisation(list(node_nearest.position), list(new_position))
 
             # print("index",self.index)
             # 5.check whether the goal is reached
@@ -195,8 +197,8 @@ class RRT:
         # update waypoint information
         self.get_waypoints()
 
-        print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start) - np.array(self.goal)))
-        print("trajectory total length: ", self.tree[self.goal_index].dist)
+        # print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start) - np.array(self.goal)))
+        # print("trajectory total length: ", self.tree[self.goal_index].dist)
 
     def get_waypoints(self):
         """
@@ -210,9 +212,9 @@ class RRT:
         self.waypoint = waypoint
         self.start_pos = waypoint[0:-1]
         self.end_pos = waypoint[1:]
-        print(np.shape(self.waypoint))
-        print(np.shape(self.start_pos))
-        print(np.shape(self.end_pos))
+        # print(np.shape(self.waypoint))
+        # print(np.shape(self.start_pos))
+        # print(np.shape(self.end_pos))
 
 
 if __name__ == "__main__":
@@ -285,6 +287,7 @@ if __name__ == "__main__":
     shortest_path += rrt.shortest_path
     shortest_distance += np.linalg.norm(np.array(rrt.start) - np.array(rrt.goal))
 
+    print(time.time()-start_time,rrt.tree[rrt.goal_index].dist)
     print("FINISHED")
-    print("Shortest distance possible: ", shortest_distance)
-    print("Shortest path found: ", shortest_path)
+    # print("Shortest distance possible: ", shortest_distance)
+    # print("Shortest path found: ", shortest_path)

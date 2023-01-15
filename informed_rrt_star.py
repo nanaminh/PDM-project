@@ -97,6 +97,8 @@ class InformedRRTStar:
         self.root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
         self.push_new_node(self.root)  # push the root, index=0
         # visualize the start and goal position with a line
+        initlTime = time.time() - start_time
+        print(initlTime,", 0")
         # print("start and goal", self.start, self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
@@ -339,6 +341,7 @@ if __name__ == "__main__":
     shortest_path += info_rrt_star.shortest_path
     shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
 
+    print(time.time()-start_time,info_rrt_star.tree[info_rrt_star.goal_index].dist)
     print("FINISHED")
     print("Shortest distance possible: ", shortest_distance)
     print("Shortest path found: ", shortest_path)
