@@ -21,6 +21,7 @@ class Node:
     def __init__(self, position, parent, dist=0):
         self.position = position  # coordinate (x,y,z),np.array
         self.index_parent = parent
+        self.index_children = []
         self.dist = dist  # dist to root
 
 
@@ -129,7 +130,7 @@ class InformedRRTStar:
             # 4. Push new node to the tree
             # normalized = diff_coordinate / euler_distance * self.delta
             new_position = node_nearest.position + min_position
-            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
+            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)
             self.push_new_node(node_new)
 
             # 5. Search other possible parents
@@ -155,16 +156,19 @@ class InformedRRTStar:
             # node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
+            self.tree[near_index].index_children.append(self.index)
             # visualisation(list(node_near.position), list(new_position))
 
             # 7. Rewiring nodes to new node (if distance becomes shorter)
-            for i in range(near_count):
-                node = self.tree[nodes_near_list[i]]
+            for i in nodes_near_list:
+                node = self.tree[i]
                 current_dist = node.dist
                 new_dist = node_new.dist + np.linalg.norm(node.position - node_new.position)
                 if new_dist < current_dist:
                     node.index_parent = self.index
                     node.dist = new_dist
+                    self.update_children(node)
+
                     # p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
                     #                    lineWidth=1)
 
@@ -198,6 +202,12 @@ class InformedRRTStar:
                         # 9b. Trace back to start
                         self.backtracking()
         # return self.goal_found
+
+    def update_children(self, node):
+        for child_index in node.index_children:
+            child = self.tree[child_index]
+            child.dist = node.dist + np.linalg.norm(node.position - child.position)
+            self.update_children(child)
 
     def push_new_node(self, node):
         self.tree.append(node)
