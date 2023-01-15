@@ -23,7 +23,7 @@ class Node:
 
 
 def visualisation(start_pos, goal_pos):
-    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
+    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
 
 
 def collision_check(start_pos, goal_pos):
@@ -42,7 +42,7 @@ class InformedRRTStar:
 
     """
 
-    def __init__(self, start_pos, goal_pos):
+    def __init__(self, start_pos, goal_pos, first_path=True, previous=None):
         """
         initialize RRT tree with a root rrt_node
         input: start_pos[x,y,z], goal_pos[x,y,z]
@@ -69,27 +69,38 @@ class InformedRRTStar:
         self.shortest_path = -1  # distance from goal to root, -1 if no path is found
 
         ####################################
-        self.trajectory_back = []  #
-        self.waypoint = []
-        self.start_pos = []
-        self.end_pos = []
+        self.first_path = first_path
+        self.previous = previous
+        if first_path:
+            self.trajectory_back = []  #
+            self.waypoint = []
+            self.start_pos = []
+            self.end_pos = []
+        else:
+            previous = previous
+            self.trajectory_back = previous.trajectory_back  #
+            self.waypoint = previous.waypoint
+            self.start_pos = previous.start_pos
+            self.end_pos = previous.end_pos
         #########################################
 
-        root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
-        self.push_new_node(root)  # push the root, index=0
+        self.root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
+        self.push_new_node(self.root)  # push the root, index=0
         # visualize the start and goal position with a line
         print("start and goal", self.start, self.goal)
         p.addUserDebugLine(self.start, self.goal, lineColorRGB=[0, 0, 1], lifeTime=0, lineWidth=3)
 
     def step(self):
         # 1. Get random sample if goal is not found, otherwise use informed sampling.
-        
+
         if not self.goal_found:
             # a random point is sampled in an ellipsoid with preset margin around the start and goal 
             margin = 2.0
-            random_position = informed_sample(np.array(self.start), np.array(self.goal), np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
+            random_position = informed_sample(np.array(self.start), np.array(self.goal),
+                                              np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
         else:
-            random_position = informed_sample(np.array(self.start), np.array(self.goal), self.tree[self.goal_index].dist)
+            random_position = informed_sample(np.array(self.start), np.array(self.goal),
+                                              self.tree[self.goal_index].dist)
         # 2. Find the nearest node in the tree
         min_distance = 100000
         min_index = 0
@@ -135,7 +146,7 @@ class InformedRRTStar:
             node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
-            visualisation(list(node_near.position), list(new_position))
+            # visualisation(list(node_near.position), list(new_position))
 
             # 7. Rewiring nodes to new node (if distance becomes shorter)
             for i in range(near_count):
@@ -145,8 +156,8 @@ class InformedRRTStar:
                 if new_dist < current_dist:
                     node.index_parent = self.index
                     node.dist = new_dist
-                    p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
-                                       lineWidth=0.5)
+                    # p.addUserDebugLine(node.position, node_new.position, lineColorRGB=[0, 0, 1], lifeTime=0,
+                    #                    lineWidth=1)
 
             # 8. Check whether the goal is reached, and if it is an improvement
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
@@ -160,7 +171,7 @@ class InformedRRTStar:
                     self.push_new_node(goal_node)
                     self.goal_index = self.index
                     self.shortest_path = goal_node.dist
-                    visualisation(list(new_position), self.goal)
+                    # visualisation(list(new_position), self.goal)
 
                     # 9a. Trace back to start
                     self.backtracing()
@@ -173,7 +184,7 @@ class InformedRRTStar:
                         self.push_new_node(new_goal_node)
                         self.goal_index = self.index
                         self.shortest_path = new_goal_node.dist
-                        visualisation(list(new_position), self.goal)
+                        # visualisation(list(new_position), self.goal)
 
                         # 9b. Trace back to start
                         self.backtracing()
@@ -189,10 +200,17 @@ class InformedRRTStar:
 
         """
         index = self.goal_index
-        self.trajectory_back = []
-        self.waypoint = []
-        self.start_pos = []
-        self.end_pos = []
+        if self.first_path:
+            self.trajectory_back = []  #
+            self.waypoint = []
+            self.start_pos = []
+            self.end_pos = []
+        else:
+            previous = self.previous
+            self.trajectory_back = previous.trajectory_back  #
+            self.waypoint = previous.waypoint
+            self.start_pos = previous.start_pos
+            self.end_pos = previous.end_pos
 
         while index != 0:  # if arrive root, break
             self.trajectory_back.append(self.tree[index])
@@ -221,9 +239,9 @@ class InformedRRTStar:
         self.waypoint = waypoint
         self.start_pos = waypoint[0:-1]
         self.end_pos = waypoint[1:]
-        print(np.shape(self.waypoint))
-        print(np.shape(self.start_pos))
-        print(np.shape(self.end_pos))
+        # print(np.shape(self.waypoint))
+        # print(np.shape(self.start_pos))
+        # print(np.shape(self.end_pos))
 
     # debug test
 
@@ -231,53 +249,69 @@ class InformedRRTStar:
 if __name__ == "__main__":
     p.connect(p.GUI)
     p.setAdditionalSearchPath(pd.getDataPath())
-    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
-    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    
-    
-    # p.loadURDF("plane.urdf")
-    
+
     quarterRotation = [0, 0, 0.7071, 0.7071]
-    
+
     # WINDOWS
-    windowsCenter = np.array([3,0,0])
-    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter,np.array([0, 0, -0.1])))
-    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter,np.array([0, 0, 1.6])))
-    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([0, 0, 0.1])))
-    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([-1, 0, 0.1])))
-    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([1, 0, 0.1])))
-    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([-2, 0, 0.1])))
-    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter,np.array([2, 0, 0.1])))
+    windowsCenter = np.array([3, 0, 0])
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter, np.array([0, 0, -0.1])))
+    p.loadURDF("windowsHorizontal.urdf", np.add(windowsCenter, np.array([0, 0, 1.6])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([0, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([-1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([1, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([-2, 0, 0.1])))
+    p.loadURDF("windowsVertical.urdf", np.add(windowsCenter, np.array([2, 0, 0.1])))
     # TUNNEL
-    tunnelCenter = np.array([0,-2,0.1])
-    p.loadURDF("lowWall.urdf", np.add(tunnelCenter,np.array([0, -0.4, -0.1])))
-    p.loadURDF("roof.urdf", np.add(tunnelCenter,np.array([0, 0, -0.1])))
-    p.loadURDF("lowWall.urdf", np.add(tunnelCenter,np.array([0, 0.4, -0.1])))
+    tunnelCenter = np.array([0, -2, 0.1])
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter, np.array([0, -0.4, -0.1])))
+    p.loadURDF("roof.urdf", np.add(tunnelCenter, np.array([0, 0, -0.1])))
+    p.loadURDF("lowWall.urdf", np.add(tunnelCenter, np.array([0, 0.4, -0.1])))
     # LOW WALL
-    p.loadURDF("lowWall.urdf", [-2,0,0.1])
+    p.loadURDF("lowWall.urdf", [-2, 0, 0.1])
     # CRAWL
-    crawlCenter = np.array([0,3,-1])
-    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter,np.array([0, 0, 1.5])), quarterRotation)
-    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, -2, 0])), quarterRotation)
-    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter,np.array([0, 2, 0])), quarterRotation)
+    crawlCenter = np.array([0, 3, -1])
+    p.loadURDF("windowsHorizontal.urdf", np.add(crawlCenter, np.array([0, 0, 1.5])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter, np.array([0, -2, 0])), quarterRotation)
+    p.loadURDF("windowsVertical.urdf", np.add(crawlCenter, np.array([0, 2, 0])), quarterRotation)
 
     # Floor collider
-    p.loadURDF("floorCollider.urdf", [0,0,-0.5])
-    
-    
-    windowsSeq = np.array([[3, 2, 0.5], [3, -2, 0.5]])
-    tunnelSeq = np.array([[3, -2, 0.5], [-2, -2, 0.5]])
+    p.loadURDF("floorCollider.urdf", [0, 0, -0.5])
+
     lowWallSeq = np.array([[-2, -2, 0.5], [-2, 2, 0.5]])
     crawlSeq = np.array([[-2, 2, 0.5], [3, 2, 0.5]])
-    
-    info_rrt_star = InformedRRTStar(crawlSeq[0], crawlSeq[1])   
+    windowsSeq = np.array([[3, 2, 0.5], [3, -2, 0.5]])
+    tunnelSeq = np.array([[3, -2, 0.5], [-2, -2, 0.5]])
 
-	
-    ######################DEBUG TEST1 stop after goal found###############################
-    while 1:
-        while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
-            info_rrt_star.step()
-    ######################DEBUG TEST1 END#######################################################
+    shortest_distance = 0
+    shortest_path = 0
+
+    info_rrt_star = InformedRRTStar(lowWallSeq[0], lowWallSeq[1])
+    while info_rrt_star.index <= 1000:  # Limit in the amount of nodes.
+        info_rrt_star.step()
+    shortest_path += info_rrt_star.shortest_path
+    shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+    prev = info_rrt_star
+
+    info_rrt_star = InformedRRTStar(crawlSeq[0], crawlSeq[1], first_path=False, previous=prev)
+    while info_rrt_star.index <= 1000:
+        info_rrt_star.step()
+    shortest_path += info_rrt_star.shortest_path
+    shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+    prev = info_rrt_star
+
+    info_rrt_star = InformedRRTStar(windowsSeq[0], windowsSeq[1], first_path=False, previous=prev)
+    while info_rrt_star.index <= 1000:
+        info_rrt_star.step()
+    shortest_path += info_rrt_star.shortest_path
+    shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
+    prev = info_rrt_star
+
+    info_rrt_star = InformedRRTStar(tunnelSeq[0], tunnelSeq[1], first_path=False, previous=prev)
+    while info_rrt_star.index <= 1000:
+        info_rrt_star.step()
+    shortest_path += info_rrt_star.shortest_path
+    shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
 
     print("FINISHED")
-    print("Shortest path found: ", info_rrt_star.tree[info_rrt_star.goal_index].dist)
+    print("Shortest distance possible: ", shortest_distance)
+    print("Shortest path found: ", shortest_path)
