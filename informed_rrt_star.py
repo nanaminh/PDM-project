@@ -1,8 +1,6 @@
 #######
 # RO47005 Planning and decision-making 22/23
 # Group:10
-# Author: Abel van Elburg
-# email: a.t.g.vanelburg@student.tudelft.nl
 #######
 import pybullet as p
 import pybullet_data as pd
@@ -11,6 +9,7 @@ from informed_sampling import *
 import time
 
 start_time = time.time()
+
 
 class Node:
     """
@@ -38,15 +37,17 @@ def collision_check(start_pos, goal_pos):
         collision = True
     return collision
 
-def print_results(info_rrt_star):
-    if info_rrt_star.goal_found:
-                pathLength = info_rrt_star.tree[info_rrt_star.goal_index].dist
-                # print new pathlength and ellapsed time
-                if info_rrt_star.last_path_length != pathLength:
-                    ellapsedTime = time.time() - start_time
-                    # print("after", ellapsedTime, "seconds the shortest path =", pathLength)
-                    print(ellapsedTime, ",", pathLength, "")
-                    info_rrt_star.last_path_length = pathLength    
+
+def print_results(pathfinder):
+    if pathfinder.goal_found:
+        path_length = pathfinder.tree[pathfinder.goal_index].dist
+        # print new path length and elapsed time
+        if pathfinder.last_path_length != path_length:
+            elapsed_time = time.time() - start_time
+            # print("after", elapsed_time, "seconds the shortest path =", pathLength)
+            print(elapsed_time, ",", path_length, "")
+            pathfinder.last_path_length = path_length
+
 
 class InformedRRTStar:
     """
@@ -59,14 +60,8 @@ class InformedRRTStar:
         initialize RRT tree with a root rrt_node
         input: start_pos[x,y,z], goal_pos[x,y,z]
 
-        the nodes of tree is stored in an array
+        the nodes of tree are stored in an array
         in order to simplify the random sample process, set coordinates of goal_pos>start_pos>0,
-
-        TO DO: improve the data structure with Kd-tree
-        TO DO: improve the random sample process to accept abitrary start_pos and goal_pos
-        TO DO: tune the self.delta
-        TO DO: visualize the start position and goal position with point
-        TO DO: inverse the traceback list
         """
         self.start_time = time.time()
         self.last_path_length = None
@@ -157,7 +152,7 @@ class InformedRRTStar:
                             near_index = i
 
             # 6. (Re-)attach the node to the best parent
-            node_near = self.tree[near_index]
+            # node_near = self.tree[near_index]
             node_new.index_parent = near_index
             node_new.dist = shortest_dist
             # visualisation(list(node_near.position), list(new_position))
@@ -188,7 +183,7 @@ class InformedRRTStar:
                     # visualisation(list(new_position), self.goal)
 
                     # 9a. Trace back to start
-                    self.backtracing()
+                    self.backtracking()
                     self.first_arrive = False
                 else:
                     new_goal_node = Node(np.array(self.goal), self.index,
@@ -201,14 +196,14 @@ class InformedRRTStar:
                         # visualisation(list(new_position), self.goal)
 
                         # 9b. Trace back to start
-                        self.backtracing()
+                        self.backtracking()
         # return self.goal_found
 
     def push_new_node(self, node):
         self.tree.append(node)
         self.index += 1  # update the current index
 
-    def backtracing(self):
+    def backtracking(self):
         """
         draw the trajectory from goal to root and generate the list of node
 
@@ -238,7 +233,8 @@ class InformedRRTStar:
         # update waypoint information
         self.get_waypoints()
 
-        # print("straight distance between start and goal: ", np.linalg.norm(np.array(self.start) - np.array(self.goal)))
+        # print("straight distance between start and goal: ",
+        #       np.linalg.norm(np.array(self.start) - np.array(self.goal)))
         # print("trajectory total length: ", self.tree[self.goal_index].dist)
 
     def get_waypoints(self):
@@ -246,7 +242,7 @@ class InformedRRTStar:
         output:waypoint,start_pos,end_pos  np.array()
 
         """
-        if self.trajectory_back == []:
+        if not self.trajectory_back:
             raise ValueError("Path Still NOT FOUND!")
 
         waypoint = np.vstack([node.position for node in self.trajectory_back])

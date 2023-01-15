@@ -1,25 +1,12 @@
 #######
-# RO47005 Planning and decision making 22/23
+# RO47005 Planning and decision-making 22/23
 # Group:10
-# Aurthor: Danning Zhao
-# email: D.ZHAO-3@student.tudelft.nl
 # reference to example/fly.py
 #######
-
-import os
 import time
 import argparse
-from datetime import datetime
-import pdb
-import math
-import random
 import numpy as np
 import pybullet as p
-import matplotlib.pyplot as plt
-import sys
-
-sys.path.append('../gym-pybullet-drones/')
-
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.envs.VisionAviary import VisionAviary
@@ -27,12 +14,11 @@ from gym_pybullet_drones.control.DSLPIDControl import DSLPIDControl
 from gym_pybullet_drones.control.SimplePIDControl import SimplePIDControl
 from gym_pybullet_drones.utils.Logger import Logger
 from gym_pybullet_drones.utils.utils import sync, str2bool
-
-####
 from informed_rrt_star import InformedRRTStar
 from bang_bang import tj_from_multilines
+import sys
 
-####
+sys.path.append('../gym-pybullet-drones/')
 
 
 DEFAULT_DRONES = DroneModel("cf2x")
@@ -187,7 +173,7 @@ def run(
                     target_pos=np.hstack(TARGET_POS[wp_counters[j], 0:3]),
                     # target_pos=INIT_XYZS[j, :] + TARGET_POS[wp_counters[j], :],
                     target_rpy=INIT_RPYS[j, :]
-                    )  # control
+                )  # control
 
             #### Go to the next way point and loop #####################
             for j in range(num_drones):

@@ -40,7 +40,7 @@ DEFAULT_DRONES = DroneModel("cf2x")
 DEFAULT_NUM_DRONES = 1
 DEFAULT_PHYSICS = Physics("pyb")
 DEFAULT_VISION = False
-DEFAULT_GUI = False
+DEFAULT_GUI = True
 DEFAULT_RECORD_VISION = False
 DEFAULT_PLOT = True
 DEFAULT_USER_DEBUG_GUI = False
@@ -58,7 +58,7 @@ def run(
         num_drones=DEFAULT_NUM_DRONES,
         physics=DEFAULT_PHYSICS,
         vision=DEFAULT_VISION,
-        # gui=p.GUI,
+        gui=DEFAULT_GUI,
         record_video=DEFAULT_RECORD_VISION,
         plot=DEFAULT_PLOT,
         user_debug_gui=DEFAULT_USER_DEBUG_GUI,
@@ -74,13 +74,13 @@ def run(
     H = .1
     H_STEP = .05
     R = .3
-    INIT_XYZS = np.array(
-        [[R * np.cos((i / 6) * 2 * np.pi + np.pi / 2), R * np.sin((i / 6) * 2 * np.pi + np.pi / 2) - R, H + i * H_STEP]
-         for i in range(num_drones)])  # nested lists
+    # INIT_XYZS = np.array(
+    #     [[R * np.cos((i / 6) * 2 * np.pi + np.pi / 2), R * np.sin((i / 6) * 2 * np.pi + np.pi / 2) - R, H + i * H_STEP]
+    #      for i in range(num_drones)])  # nested lists
     # print("INIT_XYZS shape",np.shape(INIT_XYZS))#(3,3)
     INIT_RPYS = np.array([[0, 0, i * (np.pi / 2) / num_drones] for i in range(num_drones)])
-    # INIT_XYZS = np.array([-2, -2, 0.5])
-    # INIT_RPYS = np.array([0, 0, np.pi/2])
+    INIT_XYZS = np.array([[-2, -2, 0.5] for i in range(num_drones)])
+    # INIT_RPYS = np.array([[-2, -2, 0.5] for i in range(num_drones)])
     # print("INIT_RPYS shape",np.shape(INIT_RPYS))#(3,3)
     AGGR_PHY_STEPS = int(simulation_freq_hz / control_freq_hz) if aggregate else 1  #
     print("AGGR_PHY_STEPS", AGGR_PHY_STEPS)
@@ -137,8 +137,6 @@ def run(
     # control_freq_hz 48
 
     action = {str(i): np.array([0, 0, 0, 0]) for i in range(num_drones)}  # DICTIONARY
-    START = time.time()
-    print("START Simulation time", START)
 
     # pre_pos = [0, 0, 0]
 
@@ -182,6 +180,9 @@ def run(
     shortest_path = 0
     info_rrt_star = InformedRRTStar(lowWallSeq[0], lowWallSeq[1])
 
+    START = time.time()
+    print("START Simulation time", START)
+
     for i in range(0, int(duration_sec * env.SIM_FREQ), AGGR_PHY_STEPS):  # duration_sec*env.SIM_FREQ
         # Find the paths
         obs, reward, done, info = env.step(action)  # update of pybullet
@@ -210,8 +211,8 @@ def run(
             info_rrt_star.step()
         shortest_path += info_rrt_star.shortest_path
         shortest_distance += np.linalg.norm(np.array(info_rrt_star.start) - np.array(info_rrt_star.goal))
-
         index_continue = i
+        break
 
     print("FINISHED")
     print("Shortest distance possible: ", shortest_distance)
@@ -299,8 +300,8 @@ if __name__ == "__main__":
                         metavar='', choices=Physics)
     parser.add_argument('--vision', default=DEFAULT_VISION, type=str2bool,
                         help='Whether to use VisionAviary (default: False)', metavar='')
-    # parser.add_argument('--gui', default=DEFAULT_GUI, type=str2bool, help='Whether to use PyBullet GUI (default: True)',
-    #                     metavar='')
+    parser.add_argument('--gui', default=DEFAULT_GUI, type=str2bool, help='Whether to use PyBullet GUI (default: True)',
+                        metavar='')
     parser.add_argument('--record_video', default=DEFAULT_RECORD_VISION, type=str2bool,
                         help='Whether to record a video (default: False)', metavar='')
     parser.add_argument('--plot', default=False, type=str2bool,

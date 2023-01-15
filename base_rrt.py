@@ -1,17 +1,14 @@
 #######
 # RO47005 Planning and decision-making 22/23
 # Group:10
-# Aurthor: Danning Zhao
-# email: D.ZHAO-3@student.tudelft.nl
 #######
-import numpy as np
 import pybullet as p
 import pybullet_data as pd
 from informed_sampling import *
-
 import time
 
 start_time = time.time()
+
 
 class Node:
     """
@@ -29,15 +26,16 @@ class Node:
 def visualisation(start_pos, goal_pos):
     p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
 
-def print_results(rrt):
-    if rrt.goal_found:
-                pathLength = rrt.tree[rrt.goal_index].dist
-                # print new pathlength and ellapsed time
-                if rrt.last_path_length != pathLength:
-                    ellapsedTime = time.time() - start_time
-                    # print("after", ellapsedTime, "seconds the shortest path =", pathLength)
-                    print(ellapsedTime, ",", pathLength, "")
-                    rrt.last_path_length = pathLength    
+
+def print_results(pathfinder):
+    if pathfinder.goal_found:
+        path_length = pathfinder.tree[pathfinder.goal_index].dist
+        # print new path length and elapsed time
+        if pathfinder.last_path_length != path_length:
+            elapsed_time = time.time() - start_time
+            # print("after", elapsed_time, "seconds the shortest path =", pathLength)
+            print(elapsed_time, ",", path_length, "")
+            pathfinder.last_path_length = path_length
 
 
 def collision_check(start_pos, goal_pos):
@@ -56,20 +54,16 @@ class RRT:
 
     """
 
-    def __init__(self, start_pos, goal_pos):
+    def __init__(self, start_pos, goal_pos, first_path=True, previous=None):
         """
         initialize RRT tree with a root rrt_node
         input: start_pos[x,y,z], goal_pos[x,y,z]
         
-        the nodes of tree is stored in an array
+        the nodes of tree are stored in an array
         in order to simplify the random sample process, set coordinates of goal_pos>start_pos>0,
-        
-        TO DO: improve the data structure with Kd-tree
-        TO DO: improve the random sample process to accept abitrary start_pos and goal_pos
-        TO DO: tune the self.delta
-        TO DO: visualize the start position and goal position with point
-        TO DO: inverse the traceback list
         """
+        self.last_path_length = None
+        self.shortest_path = None
         self.start = start_pos
         self.goal = goal_pos
         self.index = -1  # the index of current node, -1 means no nodes in the list
@@ -82,10 +76,19 @@ class RRT:
         self.tree = []
 
         ####################################
-        self.trajectory_back = []  #
-        self.waypoint = []
-        self.start_pos = []
-        self.end_pos = []
+        self.previous = previous
+        self.first_path = first_path
+        if self.first_path:
+            self.trajectory_back = []  #
+            self.waypoint = []
+            self.start_pos = []
+            self.end_pos = []
+        else:
+            previous = self.previous
+            self.trajectory_back = previous.trajectory_back  #
+            self.waypoint = previous.waypoint
+            self.start_pos = previous.start_pos
+            self.end_pos = previous.end_pos
         #########################################
 
         root = Node(position=np.array(start_pos), parent=-1)  # the root node of RRT tree
@@ -98,17 +101,20 @@ class RRT:
         # 1.random sample
         # a random point is sampled in an ellipsoid with preset margin around the start and goal 
         margin = 2.0
-        random_position = informed_sample(np.array(self.start), np.array(self.goal), np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
+        random_position = informed_sample(np.array(self.start), np.array(self.goal),
+                                          np.linalg.norm(np.array(self.start) - np.array(self.goal)) + margin)
         # print(random_position)
         # 2.find the nearest node in the tree
         min_distance = 100000
         min_index = 0
+        min_position = self.start
         for i in range(0, self.index + 1):
             diff_coordinate = random_position - self.tree[i].position
             euler_distance = np.linalg.norm(diff_coordinate)
             if euler_distance < min_distance:
                 min_distance = euler_distance
                 min_index = i
+                min_position = diff_coordinate
 
         node_nearest = self.tree[min_index]
 
@@ -116,9 +122,8 @@ class RRT:
         collision = collision_check(node_nearest.position, random_position)
         if not collision:
             # 4.push the new node into the tree
-            normalized = diff_coordinate / euler_distance * self.delta
-            new_position = node_nearest.position + normalized
-            node_new = Node(new_position, min_index, node_nearest.dist + self.delta)  # generate node_new
+            new_position = node_nearest.position + min_position
+            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
             self.push_new_node(node_new)
             visualisation(list(node_nearest.position), list(new_position))
 
@@ -126,19 +131,32 @@ class RRT:
             # 5.check whether the goal is reached
             distance_to_goal = np.linalg.norm(new_position - np.array(self.goal))
             if distance_to_goal < self.threshold:
-                print("Goal FOUND!")
                 if self.first_arrive:  # push the goal into the tree when arrive at first time, and backtrace
+                    # print("Goal FOUND!")
+                    self.goal_found = True
+
                     goal_node = Node(np.array(self.goal), self.index,
                                      node_new.dist + distance_to_goal)  # the goal's parent is the new node
                     self.push_new_node(goal_node)
-                    visualisation(list(new_position), self.goal)
-
-                    self.goal_found = True
-                    self.first_arrive = False
                     self.goal_index = self.index
+                    self.shortest_path = goal_node.dist
+                    # visualisation(list(new_position), self.goal)
 
-                    # 6.trace back
-                    self.backtracing()
+                    # 9a. Trace back to start
+                    self.backtracking()
+                    self.first_arrive = False
+                else:
+                    new_goal_node = Node(np.array(self.goal), self.index,
+                                         node_new.dist + distance_to_goal)
+                    if new_goal_node.dist < self.shortest_path:
+                        # print("better path found!")
+                        self.push_new_node(new_goal_node)
+                        self.goal_index = self.index
+                        self.shortest_path = new_goal_node.dist
+                        # visualisation(list(new_position), self.goal)
+
+                        # 9b. Trace back to start
+                        self.backtracking()
 
         # return self.goal_found
 
@@ -146,16 +164,23 @@ class RRT:
         self.tree.append(node)
         self.index += 1  # update the current index
 
-    def backtracing(self):
+    def backtracking(self):
         """
         draw the trajectory from goal to root and generate the list of node
 
         """
         index = self.goal_index
-        self.trajectory_back = []
-        self.waypoint = []
-        self.start_pos = []
-        self.end_pos = []
+        if self.first_path:
+            self.trajectory_back = []  #
+            self.waypoint = []
+            self.start_pos = []
+            self.end_pos = []
+        else:
+            previous = self.previous
+            self.trajectory_back = previous.trajectory_back  #
+            self.waypoint = previous.waypoint
+            self.start_pos = previous.start_pos
+            self.end_pos = previous.end_pos
 
         while index != 0:  # if arrive root, break
             self.trajectory_back.append(self.tree[index])
@@ -177,7 +202,7 @@ class RRT:
         output:waypoint,start_pos,end_pos  np.array()
         
         """
-        if self.trajectory_back == []:
+        if not self.trajectory_back:
             raise ValueError("Path Still NOT FOUND!")
 
         waypoint = np.vstack([node.position for node in self.trajectory_back])
@@ -192,12 +217,6 @@ class RRT:
 if __name__ == "__main__":
     p.connect(p.GUI)
     p.setAdditionalSearchPath(pd.getDataPath())
-    # p.configureDebugVisualizer(p. COV_ENABLE_WIREFRAME, 0)
-    # p.configureDebugVisualizer(p.COV_ENABLE_GUI, 0)
-    
-    # p.loadURDF("plane.urdf")
-
-    
 
     quarterRotation = [0, 0, 0.7071, 0.7071]
 
