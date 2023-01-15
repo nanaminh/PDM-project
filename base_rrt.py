@@ -23,7 +23,7 @@ class Node:
 
 
 def visualisation(start_pos, goal_pos):
-    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=1)
+    p.addUserDebugLine(start_pos, goal_pos, lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=0.5)
 
 
 def collision_check(start_pos, goal_pos):
@@ -82,9 +82,9 @@ class RRT:
 
     def step(self):
         # 1.random sample
-        random_position = np.array([np.random.random_sample() * (self.goal[i] - self.start[i]) + 1 for i in
-                                    range(0, 3)])  # +1 is for a larger sample space
-
+        random_position = np.array([np.random.random_sample() * (self.goal[i]+1 - self.start[i])  for i in
+                                    range(0, 3)])  # +1 is hard coded, for a larger sample space
+        print(random_position)
         # 2.find the nearest node in the tree
         min_distance = 100000
         min_index = 0
@@ -146,7 +146,7 @@ class RRT:
             self.trajectory_back.append(self.tree[index])
             parent_index = self.tree[index].index_parent
             p.addUserDebugLine(list(self.tree[parent_index].position), list(self.tree[index].position),
-                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=3)
+                               lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=4)
             index = parent_index
 
         self.trajectory_back.append(self.tree[0])  # push the root node

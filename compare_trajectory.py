@@ -78,6 +78,7 @@ def run(
     INIT_XYZS = np.array([[R*np.cos((i/6)*2*np.pi+np.pi/2), R*np.sin((i/6)*2*np.pi+np.pi/2)-R, H+i*H_STEP] for i in range(num_drones)])#nested lists
     #print("INIT_XYZS shape",np.shape(INIT_XYZS))#(3,3)
     INIT_RPYS = np.array([[0, 0,  i * (np.pi/2)/num_drones] for i in range(num_drones)])
+    INIT_RPYS = np.array([[0, 0,  1] for i in range(num_drones)])
     #print("INIT_RPYS shape",np.shape(INIT_RPYS))#(3,3)
     AGGR_PHY_STEPS = int(simulation_freq_hz/control_freq_hz) if aggregate else 1#
     print("AGGR_PHY_STEPS",AGGR_PHY_STEPS)
@@ -114,6 +115,38 @@ def run(
 
     #### Obtain the PyBullet Client ID from the environment ####
     PYB_CLIENT = env.getPyBulletClient()#no use for later
+    
+    p.loadURDF("windowsVertical.urdf",
+                   [1, 2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [2, 1, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [1, -2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [1, 2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [2, 2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                [3, 2, 0]
+                )
+    p.loadURDF("windowsVertical.urdf",
+                [2, 3, 0]
+                )
+    p.loadURDF("roof.urdf",
+                [1, -2, 0]
+                )
+    
+    # p.loadURDF("floorCollider.urdf",
+    #                [1, -2, 0]
+    #                )
+
+
+
 
     #### Initialize the logger #################################
     logger = Logger(logging_freq_hz=int(simulation_freq_hz/AGGR_PHY_STEPS),
@@ -135,6 +168,10 @@ def run(
 #control_freq_hz 48 
     
     
+    
+    
+
+    
     action = {str(i): np.array([0,0,0,0]) for i in range(num_drones)}#DICTIONARY
     START = time.time()
     print("START Simulation time",START)
@@ -142,7 +179,7 @@ def run(
     #pre_pos = [0, 0, 0]
     
     ##initialize rrt
-    rrt=RRT([0, 0, 0], [3, 3, 3])
+    rrt=RRT([0, 0, 0], [3, 3, 2])
     
     
     for i in range(0, int(duration_sec*env.SIM_FREQ), AGGR_PHY_STEPS):##duration_sec*env.SIM_FREQ
@@ -168,7 +205,7 @@ def run(
     TARGET_POS,NUM_WP=smooth.generateTargetPos(control_freq_hz)
     step=5
     for wp in range(0,len(TARGET_POS)-step,step):
-        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 0, 1], lifeTime=0, lineWidth=2)
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 0, 1], lifeTime=0, lineWidth=4)
     
     ##############################################################################################
     
@@ -176,7 +213,7 @@ def run(
     TARGET_POS,NUM_WP=minimum.generateTargetPos(control_freq_hz)
     step=5
     for wp in range(0,len(TARGET_POS)-step,step):
-        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=2)
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=4)
         
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
 
@@ -185,7 +222,7 @@ def run(
     TARGET_POS,NUM_WP=mini_corridor.generateTargetPos(control_freq_hz)
     step=5
     for wp in range(0,len(TARGET_POS)-step,step):
-        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 1, 0], lifeTime=0, lineWidth=2)
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 1, 0], lifeTime=0, lineWidth=4)
         
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
     
