@@ -3,6 +3,8 @@
  Group10
 
 ## Installation
+Please clone all repositorys below in the same folder. 
+
 The environment gym-pybullet-drones is used. Please follow their installation guide first:
 https://github.com/utiasDSL/gym-pybullet-drones
 
@@ -21,10 +23,14 @@ $ conda activate drones
 ```
 
 ## Our work
-We implement RRT, RRT* and informed RRT* from scratch.
+We implement RRT, informed RRT, RRT* and informed RRT* from scratch.
 To run them separatelyin a blanc environment without flying drones: 
 ```sh
 $ python3 base_rrt.py 
+
+```
+```sh
+$ python3 informed_rrt.py 
 
 ```
 ```sh
