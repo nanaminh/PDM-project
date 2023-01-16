@@ -35,11 +35,17 @@ $ python3 rrt_star.py
 $ python3 informed_rrt_star.py 
 
 ```
+To run 
+```sh
+$ python3 informed_rrt_star.py 
+
+```
+
+
 
 
 We implement minimum snap, corridor minimum snap and closed-form minimum_snap trajectory optimization from scratch.
 To compare  different trajectories in a blanc environment without flying drones: 
-
 ```sh
 $ python3 minimum_snap_corridor.py 
 
@@ -48,6 +54,14 @@ To combine  different trajectories with waypoints found by RRT method and  fly a
 ```sh
 $ python3 compare_trajectory.py
 ```
+
+To run Bang-(Coast)-Bang Segments
+```sh
+$ python3 trajectory_generation_test.py 
+```
+
+![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/corridors.jpg)
+
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt.png)
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
