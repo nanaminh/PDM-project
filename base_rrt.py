@@ -131,9 +131,9 @@ class RRT:
             normalized=diff_coordinate/euler_distance*self.delta
             new_position=node_nearest.position+normalized
             node_new=Node(new_position,min_index)#generate node_new
-            #node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
+            node_new = Node(new_position, min_index, node_nearest.dist + min_distance)  # generate node_new
             self.push_new_node(node_new)
-            # visualisation(list(node_nearest.position), list(new_position))
+            visualisation(list(node_nearest.position), list(new_position))
 
             # print("index",self.index)
             # 5.check whether the goal is reached

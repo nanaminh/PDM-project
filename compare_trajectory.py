@@ -29,7 +29,7 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 
 ####
 from base_rrt import RRT
-from  bang_bang import tj_from_multilines
+from  bang_bang import tj_from_multiple_lines
 from minimum_snap import minimum_snap
 from smooth_trajectory_original import smooth_trajectory
 from minimum_snap_corridor import minimum_snap_corridor
@@ -114,26 +114,38 @@ def run(
     #### Obtain the PyBullet Client ID from the environment ####
     PYB_CLIENT = env.getPyBulletClient()#no use for later
     ##############################load obstacles###################################
+    p.loadURDF("windowsVertical.urdf",
+                   [1, 2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [2, 1, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [1, -2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [1, 2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                   [2, 2, 0]
+                   )
+    p.loadURDF("windowsVertical.urdf",
+                [3, 2, 0]
+                )
+    p.loadURDF("windowsVertical.urdf",
+                [2, 3, 0]
+                )
+    p.loadURDF("windowsVertical.urdf",
+                [2, 4, 0]
+                )
+    p.loadURDF("windowsVertical.urdf",
+                [4, 2, 0]
+                )
     # p.loadURDF("windowsVertical.urdf",
-    #                [1, 2, 0]
-    #                )
-    # p.loadURDF("windowsVertical.urdf",
-    #                [2, 1, 0]
-    #                )
-    # p.loadURDF("windowsVertical.urdf",
-    #                [1, -2, 0]
-    #                )
-    # p.loadURDF("windowsVertical.urdf",
-    #                [1, 2, 0]
-    #                )
-    # p.loadURDF("windowsVertical.urdf",
-    #                [2, 2, 0]
-    #                )
-    # p.loadURDF("windowsVertical.urdf",
-    #             [3, 2, 0]
+    #             [4, 3, 0]
     #             )
     # p.loadURDF("windowsVertical.urdf",
-    #             [2, 3, 0]
+    #             [3, 3, 0]
     #             )
     # p.loadURDF("roof.urdf",
     #             [1, -2, 0]
@@ -207,7 +219,7 @@ def run(
      
     START_POS=rrt.start_pos   
     END_POS=rrt.end_pos   
-    TARGET_POS,NUM_WP=tj_from_multilines(START_POS,END_POS,control_freq_hz)
+    TARGET_POS,NUM_WP=tj_from_multiple_lines(START_POS,END_POS,control_freq_hz)
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
     print("rrt",rrt.waypoint)
     ##########################################################################################
@@ -223,7 +235,7 @@ def run(
     TARGET_POS,NUM_WP=minimum.generateTargetPos(control_freq_hz)
     step=5
     for wp in range(0,len(TARGET_POS)-step,step):
-        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[0, 1, 0], lifeTime=0, lineWidth=4)
+        p.addUserDebugLine(TARGET_POS[wp], TARGET_POS[wp+step], lineColorRGB=[1, 0, 0], lifeTime=0, lineWidth=4)
         
     wp_counters = np.array([int((i*NUM_WP/6)%NUM_WP) for i in range(num_drones)])
 
