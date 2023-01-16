@@ -1,5 +1,5 @@
 #######
-# RO47005 Planning and decision making 22/23
+# RO47005 Planning and decision-making 22/23
 # Group:10
 # Reference to fly.py
 #######
@@ -7,7 +7,8 @@ import time
 import argparse
 import numpy as np
 import pybullet as p
-
+import sys
+sys.path.append('../gym-pybullet-drones/')
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.envs.VisionAviary import VisionAviary

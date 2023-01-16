@@ -6,7 +6,8 @@
 import time
 import argparse
 import numpy as np
-
+import sys
+sys.path.append('../gym-pybullet-drones/')
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.envs.VisionAviary import VisionAviary
@@ -18,8 +19,7 @@ from gym_pybullet_drones.utils.utils import sync, str2bool
 from rrt_star import RRTStar
 from bang_bang import tj_from_multiple_lines
 ####
-import sys
-sys.path.append('../gym-pybullet-drones/')
+
 
 
 DEFAULT_DRONES = DroneModel("cf2x")

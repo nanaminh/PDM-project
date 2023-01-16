@@ -2,8 +2,6 @@
 #######
 #RO47005 Planning and decision making 22/23
 #Group:10
-#Aurthor: Danning Zhao
-#email: D.ZHAO-3@student.tudelft.nl
 #reference to example/fly.py
 #######
 
