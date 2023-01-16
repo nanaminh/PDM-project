@@ -1,8 +1,6 @@
 #######
 #RO47005 Planning and decision making 22/23
 #Group:10
-#Aurthor: Danning Zhao
-#email: D.ZHAO-3@student.tudelft.nl
 #Reference to fly.py
 
 #######
@@ -17,7 +15,8 @@ import random
 import numpy as np
 import pybullet as p
 import matplotlib.pyplot as plt
-
+import sys
+sys.path.append('../gym-pybullet-drones/')
 from gym_pybullet_drones.utils.enums import DroneModel, Physics
 from gym_pybullet_drones.envs.CtrlAviary import CtrlAviary
 from gym_pybullet_drones.envs.VisionAviary import VisionAviary
