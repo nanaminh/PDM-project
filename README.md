@@ -66,6 +66,6 @@ $ python3 trajectory_generation_test.py
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/trajectory_generation_test.png)
 
-
+![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/super_cool.png)
 
 
