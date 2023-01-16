@@ -35,9 +35,9 @@ $ python3 rrt_star.py
 $ python3 informed_rrt_star.py 
 
 ```
-To run 
+To run informed rrt star with updating path and goal points.
 ```sh
-$ python3 informed_rrt_star.py 
+$ python3 super_cool.py 
 
 ```
 
@@ -64,12 +64,9 @@ $ python3 trajectory_generation_test.py
 
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt.png)
 
-![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/basic_rrt_follow2.png)
-
 ![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/trajectory_generation_test.png)
 
 
-![Image text](https://github.com/nanaminh/PDM-project/blob/main/IMG/smooth.png)
 
 
 
